@@ -31,53 +31,52 @@ func (h *Handler) SetupRouters() {
 	h.Router.HandleFunc("/api/stat/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/api/stat/", h.PostStat).Methods(http.MethodPost)
 
-	h.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		_, err := fmt.Fprintf(w, "alive!")
-		if err != nil {
-			return
-		}
-	})
+	h.Router.HandleFunc("/api/health/", h.CheckHealth).Methods(http.MethodGet)
 }
 
+//GetStats - ...
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
 	i, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		_, err := fmt.Fprintf(w, "Unable to parse uint from id")
-		if err != nil {
-			return
-		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.Error(w, "Unable to parse uint from id", http.StatusBadRequest)
+		return
 	}
+
 	stat, err := h.Service.GetStats(uint(i))
 	if err != nil {
-		_, err := fmt.Fprintf(w, "Can't get stat by this ID")
-		if err != nil {
-			return
-		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.Error(w, "Can't get stat by this ID", http.StatusBadRequest)
+		return
 	}
+
 	_, err = fmt.Fprintf(w, "%+v", stat)
 	if err != nil {
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
+//GetAllStats - ...
 func (h Handler) GetAllStats(w http.ResponseWriter, r *http.Request) {
 	allStats, err := h.Service.GetAllStats()
 	if err != nil {
-		_, err := fmt.Fprintf(w, "Can't get all stats")
-		if err != nil {
-			return
-		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.Error(w, "Can't get all stats", http.StatusInternalServerError)
+		return
 	}
 
 	_, err = fmt.Fprintf(w, "%+v", allStats)
 	if err != nil {
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
+//PostStat - ...
 func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -94,10 +93,9 @@ func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
 	}
 	i, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		_, err := fmt.Fprintf(w, "Unable to parse uint from id")
-		if err != nil {
-			return
-		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.Error(w, "Unable to parse uint from id", http.StatusBadRequest)
+		return
 	}
 
 	statsType := r.Form.Get("type")
@@ -117,10 +115,18 @@ func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
 	newStat := storage.Stats{StatsType: statsType, StatsValue: statsValue}
 	err = h.Service.PostStats(uint(i), newStat)
 	if err != nil {
-		_, err := fmt.Fprintf(w, "Can't save stat")
-		if err != nil {
-			return
-		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.Error(w, "Can't save stat", http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+// CheckHealth - endpoint to check health
+func (h Handler) CheckHealth(w http.ResponseWriter, r *http.Request) {
+	_, err := fmt.Fprintf(w, "alive!")
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
