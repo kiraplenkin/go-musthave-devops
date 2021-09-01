@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - first_increment
+      - first_encriment
 
 jobs:
 
