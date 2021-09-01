@@ -24,11 +24,11 @@ type Store struct {
 
 // GetStatsByID ...
 func (s *Store) GetStatsByID(ID uint) (Stats, error) {
-	statsById, ok := s.Storage[ID]
+	statsByID, ok := s.Storage[ID]
 	if !ok {
 		return Stats{}, errors.New("can't get stats by Id")
 	}
-	return statsById, nil
+	return statsByID, nil
 }
 
 // SaveStats ...
@@ -37,8 +37,8 @@ func (s *Store) SaveStats(ID uint, stats Stats) error {
 	return nil
 }
 
-// ExistId ...
-func (s *Store) ExistId(ID uint) bool {
+// ExistID ...
+func (s *Store) ExistID(ID uint) bool {
 	_, ok := s.Storage[ID]
 	return ok
 }

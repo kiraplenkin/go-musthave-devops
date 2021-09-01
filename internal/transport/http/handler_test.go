@@ -5,6 +5,7 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/stats"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -52,6 +53,13 @@ func TestGetStats(t *testing.T) {
 			h := http.HandlerFunc(handler.GetStats)
 			h.ServeHTTP(w, req)
 			res := w.Result()
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					// TODO return error
+					return
+				}
+			}(res.Body)
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			b, err := ioutil.ReadAll(res.Body)
@@ -102,6 +110,13 @@ func TestHandler_CheckHealth(t *testing.T) {
 			h := http.HandlerFunc(handler.CheckHealth)
 			h.ServeHTTP(w, req)
 			res := w.Result()
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					// TODO return error
+					return
+				}
+			}(res.Body)
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			b, err := ioutil.ReadAll(res.Body)
 			if err != nil {

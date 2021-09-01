@@ -26,7 +26,7 @@ func NewService(store storage.Store) *Service {
 
 // GetStats - get stats by ID from storage
 func (s *Service) GetStats(ID uint) (storage.Stats, error) {
-	if s.Storage.ExistId(ID) != true {
+	if s.Storage.ExistID(ID) != true {
 		return storage.Stats{}, errors.New("can't get stats by this ID")
 	}
 	stats, err := s.Storage.GetStatsByID(ID)
