@@ -120,6 +120,10 @@ func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+	_, err = fmt.Fprintf(w, "%+v", newStat)
+	if err != nil {
+		return 
+	}
 }
 
 // CheckHealth - endpoint to check health
