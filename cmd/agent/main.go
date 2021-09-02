@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"math/rand"
-	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/go-resty/resty/v2"
 )
 
 const endpoint = "http://localhost:8080/api/stat/"
@@ -30,26 +31,18 @@ type MyService struct {
 
 // SendStats ...
 func (s SendService) SendStats(stats storage.Stats) error {
-	client := &http.Client{}
+	//client := &http.Client{}
+	client := resty.New()
 
 	data := url.Values{}
 	data.Set("id", strconv.Itoa(rand.Intn(1000)))
 	data.Add("type", stats.StatsType)
 	data.Add("value", stats.StatsValue)
 
-	// TODO use resty
-	request, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(data.Encode()))
-	if err != nil {
-		return err
-	}
-
-	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	response, err := client.Do(request)
-	if err != nil {
-		return err
-	}
-	err = response.Body.Close()
+	_, err := client.R().
+		SetHeader("Content-Type", "application/x-www-form-urlencoded").
+		SetBody(bytes.NewBufferString(data.Encode())).
+		Post(endpoint)
 	if err != nil {
 		return err
 	}
@@ -82,7 +75,7 @@ func main() {
 		<-ticker.C
 		err := myService.SaveStats(getStats())
 		if err != nil {
-			return 
+			return
 		}
 	}
 }

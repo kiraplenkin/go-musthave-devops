@@ -68,7 +68,7 @@ func TestGetStats(t *testing.T) {
 	}
 }
 
-func TestHandler_CheckHealth(t *testing.T) {
+func TestCheckHealth(t *testing.T) {
 	type fields struct {
 		Router  *mux.Router
 		Service *stats.Service
