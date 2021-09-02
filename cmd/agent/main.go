@@ -31,7 +31,6 @@ type MyService struct {
 
 // SendStats ...
 func (s SendService) SendStats(stats storage.Stats) error {
-	//client := &http.Client{}
 	client := resty.New()
 
 	data := url.Values{}
@@ -39,7 +38,11 @@ func (s SendService) SendStats(stats storage.Stats) error {
 	data.Add("type", stats.StatsType)
 	data.Add("value", stats.StatsValue)
 
-	_, err := client.R().
+	_, err := client.
+		SetRetryCount(5).
+		SetRetryWaitTime(5*time.Second).
+		SetRetryMaxWaitTime(20*time.Second).
+		R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
 		SetBody(bytes.NewBufferString(data.Encode())).
 		Post(endpoint)
