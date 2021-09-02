@@ -5,10 +5,11 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/stats"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	transportHTTP "github.com/kiraplenkin/go-musthave-devops/internal/transport/http"
+	"log"
 	"net/http"
 )
 
-// App - the struct which contains ...
+// App - the struct of app
 type App struct{}
 
 // Run - handles the startup application
@@ -22,10 +23,7 @@ func (a *App) Run() error {
 	handler := transportHTTP.NewHandler(statsService)
 	handler.SetupRouters()
 
-	if err := http.ListenAndServe(":8080", handler.Router); err != nil {
-		fmt.Println("Failed to set up server")
-		return err
-	}
+	log.Fatal(http.ListenAndServe(":8080", handler.Router))
 
 	return nil
 }
