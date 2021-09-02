@@ -231,6 +231,11 @@ func TestPostStat(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
+			err := res.Body.Close()
+			if err != nil {
+				// TODO return error
+				return 
+			}
 		})
 	}
 }
