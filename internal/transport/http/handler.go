@@ -36,8 +36,16 @@ func (h *Handler) SetupRouters() {
 
 //GetStats - ...
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	//vars := mux.Vars(r)
+	//id := vars["id"]
+	keys, ok := r.URL.Query()["id"]
+	if !ok {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.Error(w, "URL param id is missing", http.StatusBadRequest)
+		return
+	}
+
+	id := keys[0]
 
 	i, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
