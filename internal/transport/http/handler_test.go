@@ -3,9 +3,9 @@ package http
 import (
 	"bytes"
 	"github.com/gorilla/mux"
-	"github.com/kiraplenkin/go-musthave-devops/internal/stats"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +16,7 @@ import (
 func TestGetAllStats(t *testing.T) {
 	type fields struct {
 		Router  *mux.Router
-		Service *stats.Service
+		Service *storage.Store
 	}
 	type want struct {
 		code        int
@@ -33,13 +33,13 @@ func TestGetAllStats(t *testing.T) {
 			name: "OK",
 			fields: fields{
 				Router:  mux.NewRouter(),
-				Service: stats.NewService(storage.New()),
+				Service: storage.NewStorage(),
 			},
 			endpoint: "/",
 			want: want{
 				code:        http.StatusOK,
 				contentType: "text/plain; charset=utf-8",
-				text:        "{Storage:map[]}",
+				text:        "{map[]}",
 			},
 		},
 	}
@@ -57,15 +57,10 @@ func TestGetAllStats(t *testing.T) {
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			b, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				t.Errorf(err.Error())
-			}
+			require.NoError(t, err)
 			assert.Equal(t, tt.want.text, string(b))
 			err = res.Body.Close()
-			if err != nil {
-				// TODO return error
-				return
-			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -73,7 +68,7 @@ func TestGetAllStats(t *testing.T) {
 func TestGetStats(t *testing.T) {
 	type fields struct {
 		Router  *mux.Router
-		Service *stats.Service
+		Service *storage.Store
 	}
 	type want struct {
 		code        int
@@ -103,7 +98,7 @@ func TestGetStats(t *testing.T) {
 			name: "Bad id",
 			fields: fields{
 				Router:  mux.NewRouter(),
-				Service: stats.NewService(storage.New()),
+				Service: storage.NewStorage(),
 			},
 			endpoint: "/test",
 			want: want{
@@ -127,15 +122,10 @@ func TestGetStats(t *testing.T) {
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			b, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				t.Errorf(err.Error())
-			}
+			require.NoError(t, err)
 			assert.Equal(t, tt.want.text, string(b))
 			err = res.Body.Close()
-			if err != nil {
-				// TODO return error
-				return
-			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -143,7 +133,7 @@ func TestGetStats(t *testing.T) {
 func TestPostStat(t *testing.T) {
 	type fields struct {
 		Router  *mux.Router
-		Service *stats.Service
+		Service *storage.Store
 	}
 	type want struct {
 		code int
@@ -165,17 +155,17 @@ func TestPostStat(t *testing.T) {
 		name     string
 		fields   fields
 		endpoint string
-		data url.Values
+		data     url.Values
 		want     want
 	}{
 		{
 			name: "Positive data",
 			fields: fields{
 				Router:  mux.NewRouter(),
-				Service: stats.NewService(storage.New()),
+				Service: storage.NewStorage(),
 			},
 			endpoint: "/",
-			data: positiveData,
+			data:     positiveData,
 			want: want{
 				code: http.StatusCreated,
 			},
@@ -184,10 +174,10 @@ func TestPostStat(t *testing.T) {
 			name: "Empty post data",
 			fields: fields{
 				Router:  mux.NewRouter(),
-				Service: stats.NewService(storage.New()),
+				Service: storage.NewStorage(),
 			},
 			endpoint: "/",
-			data: emptyData,
+			data:     emptyData,
 			want: want{
 				code: http.StatusBadRequest,
 			},
@@ -196,10 +186,10 @@ func TestPostStat(t *testing.T) {
 			name: "Bad data",
 			fields: fields{
 				Router:  mux.NewRouter(),
-				Service: stats.NewService(storage.New()),
+				Service: storage.NewStorage(),
 			},
 			endpoint: "/",
-			data: negativeData,
+			data:     negativeData,
 			want: want{
 				code: http.StatusBadRequest,
 			},
@@ -219,10 +209,7 @@ func TestPostStat(t *testing.T) {
 			res := w.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			err := res.Body.Close()
-			if err != nil {
-				// TODO return error
-				return 
-			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -230,7 +217,7 @@ func TestPostStat(t *testing.T) {
 func TestCheckHealth(t *testing.T) {
 	type fields struct {
 		Router  *mux.Router
-		Service *stats.Service
+		Service *storage.Store
 	}
 	type want struct {
 		code int
@@ -246,7 +233,7 @@ func TestCheckHealth(t *testing.T) {
 			name: "Check health",
 			fields: fields{
 				Router:  mux.NewRouter(),
-				Service: stats.NewService(storage.New()),
+				Service: storage.NewStorage(),
 			},
 			endpoint: "/",
 			want: want{
@@ -269,15 +256,10 @@ func TestCheckHealth(t *testing.T) {
 
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			b, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				t.Errorf(err.Error())
-			}
+			require.NoError(t, err)
 			assert.Equal(t, tt.want.text, string(b))
 			err = res.Body.Close()
-			if err != nil {
-				// TODO return error
-				return
-			}
+			require.NoError(t, err)
 		})
 	}
 }

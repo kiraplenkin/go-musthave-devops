@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/kiraplenkin/go-musthave-devops/internal/stats"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	transportHTTP "github.com/kiraplenkin/go-musthave-devops/internal/transport/http"
 	"log"
@@ -12,19 +11,15 @@ import (
 // App - the struct of app
 type App struct{}
 
-// Run - handles the startup application
+// Run - function that startup application
 func (a *App) Run() error {
 	fmt.Println("Setting Up App")
 
-	store := storage.New()
-
-	statsService := stats.NewService(store)
-
-	handler := transportHTTP.NewHandler(statsService)
+	store := storage.NewStorage()
+	handler := transportHTTP.NewHandler(*store)
 	handler.SetupRouters()
 
 	log.Fatal(http.ListenAndServe(":8080", handler.Router))
-
 	return nil
 }
 
