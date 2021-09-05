@@ -1,4 +1,4 @@
-package sendingService
+package sender
 
 import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"

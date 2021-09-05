@@ -1,4 +1,4 @@
-package sendingService
+package sender
 
 import (
 	"bytes"
