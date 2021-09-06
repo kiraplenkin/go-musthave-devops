@@ -2,12 +2,12 @@ package sender
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"github.com/go-resty/resty/v2"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"runtime"
 	"strconv"
 )
@@ -21,9 +21,9 @@ type SendingService struct {
 func NewSender() *SendingService {
 	restyClient := resty.New()
 	restyClient.
-		SetRetryCount(types.SenderConfig.RetryCount).
-		SetRetryWaitTime(types.SenderConfig.RetryWaitTime).
-		SetRetryMaxWaitTime(types.SenderConfig.RetryMaxWaitTime)
+		SetRetryCount(types.SenderCfg.RetryCount).
+		SetRetryWaitTime(types.SenderCfg.RetryWaitTime).
+		SetRetryMaxWaitTime(types.SenderCfg.RetryMaxWaitTime)
 	return &SendingService{
 		Client: restyClient,
 	}
@@ -61,15 +61,21 @@ func (l *LogService) SendStats() error {
 	if err != nil {
 		return errors.New("can't get stats")
 	}
-	data := url.Values{}
-	data.Set("id", strconv.Itoa(rand.Intn(1000)))
-	data.Add("type", newStats.StatsType)
-	data.Add("value", newStats.StatsValue)
+
+	requestData := types.RequestStats{
+		ID:    strconv.Itoa(rand.Intn(1000)),
+		Type:  newStats.StatsType,
+		Value: newStats.StatsValue,
+	}
+	r, err := json.Marshal(requestData)
+	if err != nil {
+		return err
+	}
 
 	post, err := l.client.Client.R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
-		SetBody(bytes.NewBufferString(data.Encode())).
-		Post(types.SenderConfig.Endpoint)
+		SetBody(bytes.NewBufferString(string(r))).
+		Post(types.SenderCfg.Endpoint)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
@@ -80,17 +81,17 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 
 //PostStat - handler that save types.Stats to storage.Store
 func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	decoder := json.NewDecoder(r.Body)
+	var requestStats types.RequestStats
+
+	err := decoder.Decode(&requestStats)
 	if err != nil {
-		_, err := fmt.Fprintf(w, "Can't parse form")
-		if err != nil {
-			return
-		}
+		http.Error(w, "Can't decode input json", http.StatusInternalServerError)
 	}
 
-	id := r.Form.Get("id")
-	statsType := r.Form.Get("type")
-	statsValue := r.Form.Get("value")
+	id := requestStats.ID
+	statsType := requestStats.Type
+	statsValue := requestStats.Value
 	err = validator.Require(id, statsType, statsValue)
 	if err != nil {
 		http.Error(w, error.Error(err), http.StatusBadRequest)

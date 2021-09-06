@@ -12,7 +12,7 @@ func main() {
 	logger := sendingService.NewLogger(*sender)
 
 	for {
-		ticker := time.NewTicker(types.SenderConfig.ServerUpdateTime)
+		ticker := time.NewTicker(types.SenderCfg.ServerUpdateTime * time.Second)
 		<-ticker.C
 		err := logger.SendStats()
 		if err != nil {

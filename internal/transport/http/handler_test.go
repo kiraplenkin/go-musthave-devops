@@ -2,14 +2,15 @@ package http
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
+	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 )
 
@@ -139,23 +140,41 @@ func TestPostStat(t *testing.T) {
 		code int
 	}
 
-	positiveData := url.Values{}
-	positiveData.Set("id", "1")
-	positiveData.Set("type", "test")
-	positiveData.Set("value", "1")
+	positiveRequest := types.RequestStats{
+		ID:    "1",
+		Type:  "test_type",
+		Value: "test_value",
+	}
 
-	emptyData := url.Values{}
+	emptyIdRequest := types.RequestStats{
+		ID:    "",
+		Type:  "test_type",
+		Value: "test_value",
+	}
 
-	negativeData := url.Values{}
-	negativeData.Set("id", "")
-	negativeData.Set("type", "")
-	negativeData.Set("value", "")
+	badIdRequest := types.RequestStats{
+		ID:    "test_ID",
+		Type:  "test_type",
+		Value: "test_value",
+	}
+
+	emptyTypeRequest := types.RequestStats{
+		ID:    "1",
+		Type:  "",
+		Value: "test_value",
+	}
+
+	emptyValueRequest := types.RequestStats{
+		ID:    "1",
+		Type:  "test_type",
+		Value: "",
+	}
 
 	tests := []struct {
 		name     string
 		fields   fields
 		endpoint string
-		data     url.Values
+		data     types.RequestStats
 		want     want
 	}{
 		{
@@ -165,31 +184,55 @@ func TestPostStat(t *testing.T) {
 				Service: storage.NewStorage(),
 			},
 			endpoint: "/",
-			data:     positiveData,
+			data:     positiveRequest,
 			want: want{
 				code: http.StatusCreated,
 			},
 		},
 		{
-			name: "Empty post data",
+			name: "Bad ID",
 			fields: fields{
 				Router:  mux.NewRouter(),
 				Service: storage.NewStorage(),
 			},
 			endpoint: "/",
-			data:     emptyData,
+			data:     badIdRequest,
 			want: want{
 				code: http.StatusBadRequest,
 			},
 		},
 		{
-			name: "Bad data",
+			name: "Empty ID",
 			fields: fields{
 				Router:  mux.NewRouter(),
 				Service: storage.NewStorage(),
 			},
 			endpoint: "/",
-			data:     negativeData,
+			data:     emptyIdRequest,
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Empty Type",
+			fields: fields{
+				Router:  mux.NewRouter(),
+				Service: storage.NewStorage(),
+			},
+			endpoint: "/",
+			data:     emptyTypeRequest,
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Empty Value",
+			fields: fields{
+				Router:  mux.NewRouter(),
+				Service: storage.NewStorage(),
+			},
+			endpoint: "/",
+			data:     emptyValueRequest,
 			want: want{
 				code: http.StatusBadRequest,
 			},
@@ -201,14 +244,16 @@ func TestPostStat(t *testing.T) {
 				Router:  tt.fields.Router,
 				Service: tt.fields.Service,
 			}
-			req := httptest.NewRequest(http.MethodPost, tt.endpoint, bytes.NewBufferString(tt.data.Encode()))
+			r, err := json.Marshal(tt.data)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, tt.endpoint, bytes.NewBufferString(string(r)))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			w := httptest.NewRecorder()
 			h := http.HandlerFunc(handler.PostStat)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
-			err := res.Body.Close()
+			err = res.Body.Close()
 			require.NoError(t, err)
 		})
 	}
