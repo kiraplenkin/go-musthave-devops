@@ -38,9 +38,7 @@ func (h *Handler) SetupRouters() {
 
 //GetStats - handler that return types.Stats by ID
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	// TODO if id null
-	id := vars["id"]
+	id := mux.Vars(r)["id"]
 
 	i, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {

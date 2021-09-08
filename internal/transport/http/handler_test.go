@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
@@ -50,6 +51,7 @@ func TestGetAllStats(t *testing.T) {
 				Router:  tt.fields.Router,
 				Service: tt.fields.Service,
 			}
+			handler.SetupRouters()
 			req := httptest.NewRequest(http.MethodGet, tt.endpoint, nil)
 			w := httptest.NewRecorder()
 			h := http.HandlerFunc(handler.GetAllStats)
@@ -80,28 +82,31 @@ func TestGetStats(t *testing.T) {
 		name     string
 		fields   fields
 		endpoint string
+		id       string
 		want     want
 	}{
-		//{
-		//	name: "Not existed ID",
-		//	fields: fields{
-		//		Router:  mux.NewRouter(),
-		//		Service: stats.NewService(storage.New()),
-		//	},
-		//	endpoint: "/1",
-		//	want: want{
-		//		code:        http.StatusBadRequest,
-		//		contentType: "text/plain; charset=utf-8",
-		//		text:        "Can't get stat by this ID\n",
-		//	},
-		//},
+		{
+			name: "Not existed ID",
+			fields: fields{
+				Router:  mux.NewRouter(),
+				Service: storage.NewStorage(),
+			},
+			endpoint: "/",
+			id:       "1",
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: "text/plain; charset=utf-8",
+				text:        "Can't get stat by this ID\n",
+			},
+		},
 		{
 			name: "Bad id",
 			fields: fields{
 				Router:  mux.NewRouter(),
 				Service: storage.NewStorage(),
 			},
-			endpoint: "/test",
+			endpoint: "/",
+			id:       "test_id",
 			want: want{
 				code:        http.StatusBadRequest,
 				contentType: "text/plain; charset=utf-8",
@@ -115,11 +120,14 @@ func TestGetStats(t *testing.T) {
 				Router:  tt.fields.Router,
 				Service: tt.fields.Service,
 			}
-			req := httptest.NewRequest(http.MethodGet, tt.endpoint, nil)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GetStats)
-			h.ServeHTTP(w, req)
-			res := w.Result()
+			path := fmt.Sprintf("/%s", tt.id)
+			req, err := http.NewRequest(http.MethodGet, path, nil)
+			require.NoError(t, err)
+			rec := httptest.NewRecorder()
+			handler.SetupRouters()
+			handler.Router.HandleFunc("/{id}", handler.GetStats)
+			handler.Router.ServeHTTP(rec, req)
+			res := rec.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			b, err := ioutil.ReadAll(res.Body)

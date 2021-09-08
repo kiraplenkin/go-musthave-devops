@@ -23,9 +23,11 @@ type (
 
 	// Stats - struct of stats
 	Stats struct {
-		StatsType  string
-		StatsValue string
+		StatsType  string `json:"stats_type"`
+		StatsValue string `json:"stats_value"`
 	}
+
+	Storage map[uint]Stats
 
 	// RequestStats - struct of stats that transport on json
 	RequestStats struct {
