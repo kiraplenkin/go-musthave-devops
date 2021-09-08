@@ -22,7 +22,7 @@ type Store struct {
 	//Scanner *bufio.Scanner
 }
 
-// NewStorage - create new storage
+// NewStorage - create new types.Storage
 func NewStorage() *Store {
 	return &Store{Storage: types.Storage{}}
 }
