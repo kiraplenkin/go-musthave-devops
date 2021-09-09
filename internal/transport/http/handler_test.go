@@ -43,13 +43,14 @@ func TestGetAllStats(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler.SetupRouters()
-			path := fmt.Sprintf("%s", endpoint)
+			//path := fmt.Sprintf("%s", endpoint)
+			//path := endpoint
 
-			req, err := http.NewRequest(http.MethodGet, path, nil)
+			req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 			require.NoError(t, err)
 			rec := httptest.NewRecorder()
 
-			handler.Router.HandleFunc(path, handler.GetAllStats)
+			handler.Router.HandleFunc(endpoint, handler.GetAllStats)
 			handler.Router.ServeHTTP(rec, req)
 
 			res := rec.Result()
@@ -217,13 +218,13 @@ func TestCheckHealth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler.SetupRouters()
-			path := fmt.Sprintf("%s", endpoint)
+			//path := fmt.Sprintf("%s", endpoint)
 
-			req, err := http.NewRequest(http.MethodGet, path, nil)
+			req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 			require.NoError(t, err)
 			rec := httptest.NewRecorder()
 
-			handler.Router.HandleFunc(path, handler.CheckHealth)
+			handler.Router.HandleFunc(endpoint, handler.CheckHealth)
 			handler.Router.ServeHTTP(rec, req)
 
 			res := rec.Result()
