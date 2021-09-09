@@ -123,6 +123,7 @@ func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	fmt.Printf("%+v", newStat)
 }
 
 // CheckHealth handler to check health
