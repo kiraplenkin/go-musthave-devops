@@ -2,7 +2,7 @@ package http
 
 import (
 	"bytes"
-	"github.com/gorilla/mux"
+	"fmt"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,11 +13,13 @@ import (
 	"testing"
 )
 
+var (
+	contentType = "text/plain; charset=utf-8"
+	endpoint    = "/"
+	handler     = NewHandler(*storage.NewStorage())
+)
+
 func TestGetAllStats(t *testing.T) {
-	type fields struct {
-		Router  *mux.Router
-		Service *storage.Store
-	}
 	type want struct {
 		code        int
 		contentType string
@@ -25,35 +27,32 @@ func TestGetAllStats(t *testing.T) {
 	}
 	tests := []struct {
 		name     string
-		fields   fields
 		endpoint string
 		want     want
 	}{
 		{
-			name: "OK",
-			fields: fields{
-				Router:  mux.NewRouter(),
-				Service: storage.NewStorage(),
-			},
-			endpoint: "/",
+			name:     "Positive test",
+			endpoint: endpoint,
 			want: want{
 				code:        http.StatusOK,
-				contentType: "text/plain; charset=utf-8",
+				contentType: contentType,
 				text:        "{map[]}",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := &Handler{
-				Router:  tt.fields.Router,
-				Service: tt.fields.Service,
-			}
-			req := httptest.NewRequest(http.MethodGet, tt.endpoint, nil)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GetAllStats)
-			h.ServeHTTP(w, req)
-			res := w.Result()
+			handler.SetupRouters()
+			path := fmt.Sprintf("%s", endpoint)
+
+			req, err := http.NewRequest(http.MethodGet, path, nil)
+			require.NoError(t, err)
+			rec := httptest.NewRecorder()
+
+			handler.Router.HandleFunc(path, handler.GetAllStats)
+			handler.Router.ServeHTTP(rec, req)
+
+			res := rec.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			b, err := ioutil.ReadAll(res.Body)
@@ -66,59 +65,48 @@ func TestGetAllStats(t *testing.T) {
 }
 
 func TestGetStats(t *testing.T) {
-	type fields struct {
-		Router  *mux.Router
-		Service *storage.Store
-	}
 	type want struct {
 		code        int
 		contentType string
 		text        string
 	}
 	tests := []struct {
-		name     string
-		fields   fields
-		endpoint string
-		want     want
+		name string
+		id   string
+		want want
 	}{
-		//{
-		//	name: "Not existed ID",
-		//	fields: fields{
-		//		Router:  mux.NewRouter(),
-		//		Service: stats.NewService(storage.New()),
-		//	},
-		//	endpoint: "/1",
-		//	want: want{
-		//		code:        http.StatusBadRequest,
-		//		contentType: "text/plain; charset=utf-8",
-		//		text:        "Can't get stat by this ID\n",
-		//	},
-		//},
 		{
-			name: "Bad id",
-			fields: fields{
-				Router:  mux.NewRouter(),
-				Service: storage.NewStorage(),
-			},
-			endpoint: "/test",
+			name: "Not existed ID",
+			id:   "1",
 			want: want{
 				code:        http.StatusBadRequest,
-				contentType: "text/plain; charset=utf-8",
+				contentType: contentType,
+				text:        "Can't get stat by this ID\n",
+			},
+		},
+		{
+			name: "Bad id",
+			id:   "test_id",
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: contentType,
 				text:        "Unable to parse uint from id\n",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := &Handler{
-				Router:  tt.fields.Router,
-				Service: tt.fields.Service,
-			}
-			req := httptest.NewRequest(http.MethodGet, tt.endpoint, nil)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.GetStats)
-			h.ServeHTTP(w, req)
-			res := w.Result()
+			handler.SetupRouters()
+			path := fmt.Sprintf("%s%s", endpoint, tt.id)
+
+			req, err := http.NewRequest(http.MethodGet, path, nil)
+			require.NoError(t, err)
+			rec := httptest.NewRecorder()
+
+			handler.Router.HandleFunc("/{id}", handler.GetStatsByID)
+			handler.Router.ServeHTTP(rec, req)
+
+			res := rec.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			b, err := ioutil.ReadAll(res.Body)
@@ -131,65 +119,61 @@ func TestGetStats(t *testing.T) {
 }
 
 func TestPostStat(t *testing.T) {
-	type fields struct {
-		Router  *mux.Router
-		Service *storage.Store
-	}
 	type want struct {
 		code int
 	}
 
-	positiveData := url.Values{}
-	positiveData.Set("id", "1")
-	positiveData.Set("type", "test")
-	positiveData.Set("value", "1")
-
-	emptyData := url.Values{}
-
-	negativeData := url.Values{}
-	negativeData.Set("id", "")
-	negativeData.Set("type", "")
-	negativeData.Set("value", "")
-
 	tests := []struct {
-		name     string
-		fields   fields
-		endpoint string
-		data     url.Values
-		want     want
+		name string
+		data url.Values
+		want want
 	}{
 		{
 			name: "Positive data",
-			fields: fields{
-				Router:  mux.NewRouter(),
-				Service: storage.NewStorage(),
-			},
-			endpoint: "/",
-			data:     positiveData,
+			data: func() url.Values {
+				v := url.Values{}
+				v.Set("id", "1")
+				v.Set("Alloc", "100")
+				v.Set("TotalAlloc", "101")
+				v.Set("Sys", "102")
+				v.Set("Mallocs", "103")
+				v.Set("Frees", "104")
+				v.Set("LiveObjects", "105")
+				v.Set("PauseTotalNs", "106")
+				v.Set("NumGC", "107")
+				v.Set("NumGoroutine", "108")
+				return v
+			}(),
 			want: want{
 				code: http.StatusCreated,
 			},
 		},
 		{
 			name: "Empty post data",
-			fields: fields{
-				Router:  mux.NewRouter(),
-				Service: storage.NewStorage(),
-			},
-			endpoint: "/",
-			data:     emptyData,
+			data: func() url.Values {
+				v := url.Values{}
+				return v
+			}(),
 			want: want{
 				code: http.StatusBadRequest,
 			},
 		},
 		{
-			name: "Bad data",
-			fields: fields{
-				Router:  mux.NewRouter(),
-				Service: storage.NewStorage(),
-			},
-			endpoint: "/",
-			data:     negativeData,
+			name: "Empty Id",
+			data: func() url.Values {
+				v := url.Values{}
+				v.Set("id", "")
+				v.Set("Alloc", "100")
+				v.Set("TotalAlloc", "100")
+				v.Set("Sys", "100")
+				v.Set("Mallocs", "100")
+				v.Set("Frees", "100")
+				v.Set("LiveObjects", "100")
+				v.Set("PauseTotalNs", " 100")
+				v.Set("NumGC", "100")
+				v.Set("NumGoroutine", "100")
+				return v
+			}(),
 			want: want{
 				code: http.StatusBadRequest,
 			},
@@ -197,11 +181,8 @@ func TestPostStat(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := &Handler{
-				Router:  tt.fields.Router,
-				Service: tt.fields.Service,
-			}
-			req := httptest.NewRequest(http.MethodPost, tt.endpoint, bytes.NewBufferString(tt.data.Encode()))
+			handler.SetupRouters()
+			req := httptest.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(tt.data.Encode()))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			w := httptest.NewRecorder()
 			h := http.HandlerFunc(handler.PostStat)
@@ -215,46 +196,39 @@ func TestPostStat(t *testing.T) {
 }
 
 func TestCheckHealth(t *testing.T) {
-	type fields struct {
-		Router  *mux.Router
-		Service *storage.Store
-	}
 	type want struct {
-		code int
-		text string
+		code        int
+		contentType string
+		text        string
 	}
 	tests := []struct {
-		name     string
-		fields   fields
-		endpoint string
-		want     want
+		name string
+		want want
 	}{
 		{
 			name: "Check health",
-			fields: fields{
-				Router:  mux.NewRouter(),
-				Service: storage.NewStorage(),
-			},
-			endpoint: "/",
 			want: want{
-				code: http.StatusOK,
-				text: "alive!",
+				code:        http.StatusOK,
+				contentType: contentType,
+				text:        "alive!",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := Handler{
-				Router:  tt.fields.Router,
-				Service: tt.fields.Service,
-			}
-			req := httptest.NewRequest(http.MethodGet, tt.endpoint, nil)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.CheckHealth)
-			h.ServeHTTP(w, req)
-			res := w.Result()
+			handler.SetupRouters()
+			path := fmt.Sprintf("%s", endpoint)
 
+			req, err := http.NewRequest(http.MethodGet, path, nil)
+			require.NoError(t, err)
+			rec := httptest.NewRecorder()
+
+			handler.Router.HandleFunc(path, handler.CheckHealth)
+			handler.Router.ServeHTTP(rec, req)
+
+			res := rec.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
+			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			b, err := ioutil.ReadAll(res.Body)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want.text, string(b))

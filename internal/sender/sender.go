@@ -5,76 +5,53 @@ import (
 	"errors"
 	"github.com/go-resty/resty/v2"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
-	"math/rand"
 	"net/http"
 	"net/url"
-	"runtime"
 	"strconv"
+	"time"
 )
 
-// SendingService - struct of client
-type SendingService struct {
+var ErrCantSaveData = errors.New("sent data not saved")
+
+// SendClient struct of client
+type SendClient struct {
 	Client *resty.Client
 }
 
-// NewSender - func to create new client for send types.Stats
-func NewSender() *SendingService {
-	restyClient := resty.New()
-	restyClient.
+// NewSender func to create new client for send types.Stats
+func NewSender(resty *resty.Client) *SendClient {
+	resty.
 		SetRetryCount(types.SenderConfig.RetryCount).
 		SetRetryWaitTime(types.SenderConfig.RetryWaitTime).
 		SetRetryMaxWaitTime(types.SenderConfig.RetryMaxWaitTime)
-	return &SendingService{
-		Client: restyClient,
+	return &SendClient{
+		Client: resty,
 	}
 }
 
-// Logger - interface for get and send types.Stats
-type Logger interface {
-	GetStats() (types.Stats, error)
-	SendStats() error
-}
-
-// LogService - struct of LogService
-type LogService struct {
-	client SendingService
-}
-
-// NewLogger - func to create new LogService
-func NewLogger(sender SendingService) *LogService {
-	return &LogService{
-		client: sender,
-	}
-}
-
-// GetStats - func generate types.Stats
-func (l *LogService) GetStats() (types.Stats, error) {
-	var newStats types.Stats
-	newStats.StatsType = "Counter"
-	newStats.StatsValue = strconv.Itoa(runtime.NumGoroutine())
-	return newStats, nil
-}
-
-// SendStats - func run GetStats and send data with SendingService
-func (l *LogService) SendStats() error {
-	newStats, err := l.GetStats()
-	if err != nil {
-		return errors.New("can't get stats")
-	}
+// Send func send data with sender.SendClient
+func (s *SendClient) Send(stats types.Stats) error {
 	data := url.Values{}
-	data.Set("id", strconv.Itoa(rand.Intn(1000)))
-	data.Add("type", newStats.StatsType)
-	data.Add("value", newStats.StatsValue)
-
-	post, err := l.client.Client.R().
+	id := time.Now().UnixNano()
+	data.Set("id", strconv.Itoa(int(id)))
+	data.Set("Alloc", strconv.Itoa(stats.Alloc))
+	data.Set("TotalAlloc", strconv.Itoa(stats.TotalAlloc))
+	data.Set("Sys", strconv.Itoa(stats.Sys))
+	data.Set("Mallocs", strconv.Itoa(stats.Mallocs))
+	data.Set("Frees", strconv.Itoa(stats.Frees))
+	data.Set("LiveObjects", strconv.Itoa(stats.LiveObjects))
+	data.Set("PauseTotalNs", strconv.Itoa(stats.PauseTotalNs))
+	data.Set("NumGC", strconv.Itoa(stats.NumGC))
+	data.Set("NumGoroutine", strconv.Itoa(stats.NumGoroutine))
+	post, err := s.Client.R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
 		SetBody(bytes.NewBufferString(data.Encode())).
 		Post(types.SenderConfig.Endpoint)
 	if err != nil {
-		return err
+		return nil
 	}
 	if post.StatusCode() != http.StatusCreated {
-		return errors.New("sent data not saved")
+		return ErrCantSaveData
 	}
 	return nil
 }

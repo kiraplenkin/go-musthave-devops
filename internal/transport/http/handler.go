@@ -10,63 +10,56 @@ import (
 	"strconv"
 )
 
-// Handler - stores pointers to service
+// Handler stores pointers to service
 type Handler struct {
 	Router  *mux.Router
 	Service *storage.Store
 }
 
-// NewHandler - returns a pointer to Handler
+// NewHandler returns a pointer to Handler
 func NewHandler(s storage.Store) *Handler {
 	return &Handler{
 		Service: &s,
 	}
 }
 
-// SetupRouters - sets up all the routes for App
+// SetupRouters sets up all the routes for server
 func (h *Handler) SetupRouters() {
-	fmt.Println("Setting Up Routers")
 	h.Router = mux.NewRouter()
 
-	h.Router.HandleFunc("/api/stat/{id}", h.GetStats).Methods(http.MethodGet)
+	h.Router.HandleFunc("/api/stat/{id}", h.GetStatsByID).Methods(http.MethodGet)
 	h.Router.HandleFunc("/api/stat/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/api/stat/", h.PostStat).Methods(http.MethodPost)
 
 	h.Router.HandleFunc("/api/health/", h.CheckHealth).Methods(http.MethodGet)
 }
 
-//GetStats - handler that return types.Stats by ID
-func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	// TODO if id null
-	id := vars["id"]
+//GetStatsByID handler that return types.Stats by ID
+func (h *Handler) GetStatsByID(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
 
 	i, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		http.Error(w, "Unable to parse uint from id", http.StatusBadRequest)
 		return
 	}
 
 	stat, err := h.Service.GetStatsByID(uint(i))
 	if err != nil {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		http.Error(w, "Can't get stat by this ID", http.StatusBadRequest)
 		return
 	}
 
 	_, err = fmt.Fprintf(w, "%+v", stat)
 	if err != nil {
-		return
+		http.Error(w, error.Error(err), http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
-//GetAllStats - handler that return all values from storage.Store
+//GetAllStats handler that return all values from storage.Store
 func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 	allStats, err := h.Service.GetAllStats()
 	if err != nil {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		http.Error(w, "Can't get all stats", http.StatusInternalServerError)
 		return
 	}
@@ -75,38 +68,53 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
-//PostStat - handler that save types.Stats to storage.Store
+//PostStat handler that save types.Stats to storage.Store
 func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		_, err := fmt.Fprintf(w, "Can't parse form")
-		if err != nil {
-			return
-		}
+		http.Error(w, "can't parse form", http.StatusInternalServerError)
 	}
 
 	id := r.Form.Get("id")
-	statsType := r.Form.Get("type")
-	statsValue := r.Form.Get("value")
-	err = validator.Require(id, statsType, statsValue)
+	alloc := r.Form.Get("Alloc")
+	totalAlloc := r.Form.Get("TotalAlloc")
+	sys := r.Form.Get("Sys")
+	mallocs := r.Form.Get("Mallocs")
+	frees := r.Form.Get("Frees")
+	liveObjects := r.Form.Get("LiveObjects")
+	pauseTotalNs := r.Form.Get("PauseTotalNs")
+	numGC := r.Form.Get("NumGC")
+	numGoroutine := r.Form.Get("NumGoroutine")
+
+	err = validator.Require(
+		id, alloc, totalAlloc, sys, mallocs, frees, liveObjects, pauseTotalNs, numGC, numGoroutine,
+	)
 	if err != nil {
 		http.Error(w, error.Error(err), http.StatusBadRequest)
+		return
 	}
 
 	i, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		http.Error(w, "Unable to parse uint from id", http.StatusBadRequest)
 		return
 	}
 
-	newStat := types.Stats{StatsType: statsType, StatsValue: statsValue}
+	newStat := types.Stats{
+		Alloc:        validator.Transform(alloc),
+		TotalAlloc:   validator.Transform(totalAlloc),
+		Sys:          validator.Transform(sys),
+		Mallocs:      validator.Transform(mallocs),
+		Frees:        validator.Transform(frees),
+		LiveObjects:  validator.Transform(liveObjects),
+		PauseTotalNs: validator.Transform(pauseTotalNs),
+		NumGC:        validator.Transform(numGC),
+		NumGoroutine: validator.Transform(numGoroutine),
+	}
 	err = h.Service.SaveStats(uint(i), newStat)
 	if err != nil {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		http.Error(w, "Can't save stat", http.StatusInternalServerError)
 		return
 	}
@@ -117,11 +125,10 @@ func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// CheckHealth - handler to check health
+// CheckHealth handler to check health
 func (h Handler) CheckHealth(w http.ResponseWriter, _ *http.Request) {
 	_, err := fmt.Fprintf(w, "alive!")
 	if err != nil {
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }

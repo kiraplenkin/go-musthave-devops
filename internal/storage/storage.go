@@ -5,40 +5,35 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 )
 
-// Storager - interface for storager
-type Storager interface {
-	GetStats(ID uint) (*types.Stats, error)
-	SaveStats(ID uint, stats types.Stats) error
-	GetAllStats() ([]map[uint]types.Stats, error)
-}
+// ErrCantGetStats custom error if there isn't ID in Store
+var ErrCantGetStats = errors.New("can't get stats by ID")
 
-// Store - struct, where types.Stats saved
+// Store struct, where types.Stats saved
 type Store struct {
-	Storage map[uint]types.Stats
+	Storage types.Storage
 }
 
-// NewStorage - create new storage
+// NewStorage create new Store
 func NewStorage() *Store {
-	var storage = make(map[uint]types.Stats)
-	return &Store{Storage: storage}
+	return &Store{Storage: types.Storage{}}
 }
 
-// GetStatsByID - method of Store struct to get Stats by ID
+// GetStatsByID get types.Stats by ID
 func (s *Store) GetStatsByID(ID uint) (*types.Stats, error) {
 	statsByID, ok := s.Storage[ID]
 	if !ok {
-		return &types.Stats{}, errors.New("can't get stats by ID")
+		return nil, ErrCantGetStats
 	}
 	return &statsByID, nil
 }
 
-// SaveStats - method of Store struct to save stats in storage by ID
+// SaveStats save types.Stats in Storage by ID
 func (s *Store) SaveStats(ID uint, stats types.Stats) error {
 	s.Storage[ID] = stats
 	return nil
 }
 
-// GetAllStats - method of Store struct what return all values of Storage
+// GetAllStats return all types.Stats of Storage
 func (s *Store) GetAllStats() (*Store, error) {
 	return s, nil
 }
