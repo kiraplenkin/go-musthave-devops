@@ -14,22 +14,26 @@ jobs:
     steps:
     - name: Install deps
       run: |
-        apt-get update && apt-get install -y --no-install-recommends lsof psmisc netcat
+        apt-get update && apt-get install -y --no-install-recommends lsof psmisc netcat wget
 
     - name: Checkout code
       uses: actions/checkout@v2
 
+#    - name: Download devopstest binary
+#      uses: robinraju/release-downloader@v1
+#      with:
+#        repository: Yandex-Practicum/go-autotests-bin
+#        latest: true
+#        fileName: devopstest
+#        out-file-path: .tools
     - name: Download devopstest binary
-      uses: robinraju/release-downloader@v1
-      with:
-        repository: Yandex-Practicum/go-autotests-bin
-        latest: true
-        fileName: devopstest
-        out-file-path: .tools
+      run: |
+        mkdir $GITHUB_WORKSPACE/.tools
+        cd $GITHUB_WORKSPACE/.tools
+        wget https://github.com/Yandex-Practicum/go-autotests-bin/raw/main/.tools/devopstest
 
     - name: Setup autotest binary
       run: |
-        mkdir $GITHUB_WORKSPACE/.tools/devopstest
         chmod -R +x $GITHUB_WORKSPACE/.tools/devopstest
         mv $GITHUB_WORKSPACE/.tools/devopstest /usr/local/bin/devopstest
 
@@ -70,7 +74,7 @@ jobs:
       run: |
         devopstest -test.v -test.run=^TestPostHandlers2$ ./...
 
-    - name: "[Code increment #3] update/get metric"
+    - name: "[Code increment #3] Update/Get metric"
       if: always()
       run: |
         devopstest -test.v -test.run=^TestSetGetMetrics$ ./...
@@ -80,7 +84,26 @@ jobs:
       run: |
         devopstest -test.v -test.run=^TestMonitoringData$ ./...
 
-    # - name: "[Code increment #4] Encoding"
+    # - name: "[Code increment #4] Check JSON API handler"
+    #   if: always()
+    #   run: |
+    #     devopstest -test.v -test.run=^TestAPIHandler\|TestUsesJSONEncoder$ ./...
+
+    - name: "[Code increment #4] Json Post"
+      if: always()
+      run: |
+        devopstest -test.v -test.run=^TestJsonPostHandlers$ ./...
+
+    - name: "[Code increment #4] Json Update/Get metric"
+      if: always()
+      run: |
+        devopstest -test.v -test.run=^TestJsonSetGetMetrics$ ./...
+
+    - name: "[Code increment #4] Json Monitoring data"
+      if: always()
+      run: |
+        devopstest -test.v -test.run=^TestJsonMonitoringData$ ./...
+
 
     # - name: "[Code increment #5] Start web server with custom settings"
     #   if: always()

@@ -1,7 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
+	transportHTTP "github.com/kiraplenkin/go-musthave-devops/internal/transport/http"
+	"log"
+	"net/http"
+)
 
 func main() {
-	fmt.Println("Test server")
+	store := storage.NewStorage()
+	handler := transportHTTP.NewHandler(*store)
+	handler.SetupRouters()
+
+	log.Fatal(http.ListenAndServe(":8080", handler.Router))
 }
