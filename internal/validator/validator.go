@@ -2,25 +2,18 @@ package validator
 
 import (
 	"fmt"
-	"strconv"
+	"reflect"
 )
 
 // Require func for validate input requested values
-func Require(values ...string) error {
+func Require(values ...interface{}) error {
 	for _, v := range values {
-		if v == "" {
+		if v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil()) {
 			return fmt.Errorf("some of input values is empty")
 		}
-		_, err := strconv.Atoi(v)
-		if err != nil {
-			return fmt.Errorf("can't parse int from string value")
+		if _, ok := v.(int); !ok {
+			return fmt.Errorf("can't parse int values")
 		}
 	}
 	return nil
-}
-
-// Transform func for transforming values from string to unt
-func Transform(value string) int {
-	v, _ := strconv.Atoi(value)
-	return v
 }

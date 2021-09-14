@@ -15,7 +15,7 @@ type SendClientMock struct {
 }
 
 // Send mock-func for send types.Stats
-func (s *SendClientMock) Send(stats types.Stats) error {
+func (s *SendClientMock) Send(stats types.RequestStats) error {
 	args := s.Called(stats)
 	return args.Error(0)
 }
@@ -23,16 +23,16 @@ func (s *SendClientMock) Send(stats types.Stats) error {
 // TestSender_Send mock-test for sending types.Stats to server
 func TestSender_Send(t *testing.T) {
 	mockSender := new(SendClientMock)
-	testStats := types.Stats{
-		Alloc:        100,
-		TotalAlloc:   100,
-		Sys:          100,
-		Mallocs:      100,
-		Frees:        100,
-		LiveObjects:  100,
-		PauseTotalNs: 100,
-		NumGC:        100,
-		NumGoroutine: 100,
+	testStats := types.RequestStats{
+		ID:           1,
+		TotalAlloc:   101,
+		Sys:          102,
+		Mallocs:      103,
+		Frees:        104,
+		LiveObjects:  105,
+		PauseTotalNs: 106,
+		NumGC:        107,
+		NumGoroutine: 108,
 	}
 
 	mockSender.On("Send", testStats).Return(nil)

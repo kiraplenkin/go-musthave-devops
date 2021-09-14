@@ -6,21 +6,22 @@ import (
 	"testing"
 )
 
-var store = &Store{
-	Storage: types.Storage{
-		1: types.Stats{
-			Alloc:        100,
-			TotalAlloc:   100,
-			Sys:          100,
-			Mallocs:      100,
-			Frees:        100,
-			LiveObjects:  100,
-			PauseTotalNs: 100,
-			NumGC:        100,
-			NumGoroutine: 100,
+var (
+	store = &Store{
+		Storage: types.Storage{
+			1: types.Stats{
+				TotalAlloc:   100,
+				Sys:          100,
+				Mallocs:      100,
+				Frees:        100,
+				LiveObjects:  100,
+				PauseTotalNs: 100,
+				NumGC:        100,
+				NumGoroutine: 100,
+			},
 		},
-	},
-}
+	}
+)
 
 // TestStore_GetStatsByID test for getting types.Stats by ID from types.Storage
 func TestStore_GetStatsByID(t *testing.T) {
@@ -35,7 +36,6 @@ func TestStore_GetStatsByID(t *testing.T) {
 			name: "Positive test",
 			args: 1,
 			want: &types.Stats{
-				Alloc:        100,
 				TotalAlloc:   100,
 				Sys:          100,
 				Mallocs:      100,
@@ -63,24 +63,6 @@ func TestStore_GetStatsByID(t *testing.T) {
 	}
 }
 
-// TestNewStorage test for creating Store
-func TestNewStorage(t *testing.T) {
-	tests := []struct {
-		name string
-		want *Store
-	}{
-		{
-			name: "Positive test",
-			want: NewStorage(),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, NewStorage())
-		})
-	}
-}
-
 // TestStore_SaveStats test for saving types.Stats to Store
 func TestStore_SaveStats(t *testing.T) {
 	type args struct {
@@ -97,7 +79,6 @@ func TestStore_SaveStats(t *testing.T) {
 			args: args{
 				ID: 2,
 				stats: types.Stats{
-					Alloc:        100,
 					TotalAlloc:   100,
 					Sys:          100,
 					Mallocs:      100,
@@ -123,12 +104,12 @@ func TestStore_SaveStats(t *testing.T) {
 func TestStore_GetAllStats(t *testing.T) {
 	tests := []struct {
 		name string
-		want *Store
+		want *types.Storage
 		err  error
 	}{
 		{
 			name: "Positive test",
-			want: store,
+			want: &store.Storage,
 			err:  nil,
 		},
 	}
@@ -137,6 +118,10 @@ func TestStore_GetAllStats(t *testing.T) {
 			testedStore, err := store.GetAllStats()
 			assert.Equal(t, tt.want, testedStore)
 			assert.Equal(t, tt.err, err)
+			//err = os.Remove("test_file")
+			//if err != nil {
+			//	require.NoError(t, err)
+			//}
 		})
 	}
 }

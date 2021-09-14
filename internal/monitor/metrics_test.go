@@ -27,7 +27,7 @@ func TestNewMonitor(t *testing.T) {
 // TestMonitor_Get test for generate types.Stats
 func TestMonitor_Get(t *testing.T) {
 	type want struct {
-		stats types.Stats
+		stats types.RequestStats
 		error error
 	}
 	tests := []struct {
@@ -37,7 +37,7 @@ func TestMonitor_Get(t *testing.T) {
 		{
 			name: "Positive test",
 			want: want{
-				stats: types.Stats{},
+				stats: types.RequestStats{},
 				error: nil,
 			},
 		},
