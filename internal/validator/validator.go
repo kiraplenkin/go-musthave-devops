@@ -11,7 +11,7 @@ func Require(values ...interface{}) error {
 		if v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil()) {
 			return fmt.Errorf("some of input values is empty")
 		}
-		if _, ok := v.(int); !ok {
+		if _, ok := v.(uint); !ok {
 			return fmt.Errorf("can't parse int values")
 		}
 	}

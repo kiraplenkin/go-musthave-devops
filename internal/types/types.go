@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"time"
 )
 
@@ -8,18 +9,21 @@ type (
 	// Config configs of app
 	Config struct {
 		Endpoint         string
-		ServerUpdateTime time.Duration
+		UpdateFrequency  time.Duration
+		ServerAddress    string
+		ServerPort       string
 		RetryCount       int
 		RetryWaitTime    time.Duration
 		RetryMaxWaitTime time.Duration
 	}
 
-	// ServerConfig - config for server app
+	// ServerConfig config for server app
 	ServerConfig struct {
 		ServerAddress   string `env:"SERVER_ADDRESS" envDefault:"localhost"`
 		FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"test.json"`
 	}
 
+	// Stats struct to save stats
 	Stats struct {
 		TotalAlloc   int
 		Sys          int
@@ -48,10 +52,18 @@ type (
 	}
 )
 
-// SenderConfig config for sender service
-var SenderConfig = Config{
-	Endpoint:         "/update/",
-	RetryCount:       5,
-	RetryWaitTime:    10,
-	RetryMaxWaitTime: 30,
-}
+var (
+	// SenderConfig config for sender service
+	SenderConfig = Config{
+		Endpoint:         "/update/",
+		UpdateFrequency:  5,
+		ServerAddress:    "localhost",
+		ServerPort:       "8080",
+		RetryCount:       5,
+		RetryWaitTime:    10,
+		RetryMaxWaitTime: 30,
+	}
+
+	ErrCantGetStats = errors.New("can't get stats by ID")
+	ErrCantSaveData = errors.New("sent data not saved")
+)

@@ -51,7 +51,7 @@ func TestStore_GetStatsByID(t *testing.T) {
 			name: "Negative test",
 			args: 2,
 			want: nil,
-			err:  ErrCantGetStats,
+			err:  types.ErrCantGetStats,
 		},
 	}
 	for _, tt := range tests {

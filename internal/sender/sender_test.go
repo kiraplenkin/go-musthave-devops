@@ -1,7 +1,6 @@
 package sender
 
 import (
-	"github.com/go-resty/resty/v2"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,19 +43,18 @@ func TestSender_Send(t *testing.T) {
 
 // TestNewSender test for create SendClient
 func TestNewSender(t *testing.T) {
-	restyClient := resty.New()
 	tests := []struct {
 		name string
 		want *SendClient
 	}{
 		{
 			name: "Positive test",
-			want: NewSender(restyClient),
+			want: NewSender(),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, NewSender(restyClient))
+			assert.Equal(t, tt.want, NewSender())
 		})
 	}
 }

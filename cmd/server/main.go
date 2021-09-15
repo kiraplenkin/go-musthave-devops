@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
@@ -15,6 +16,8 @@ import (
 	"syscall"
 )
 
+var serverPort string
+
 func main() {
 	serverCfg := types.ServerConfig{}
 	err := env.Parse(&serverCfg)
@@ -22,7 +25,7 @@ func main() {
 		return
 	}
 
-	serverPort := flag.String("p", "8080", "port to run server")
+	flag.StringVar(&serverPort, "p", "8080", "port to run server")
 	flag.Parse()
 
 	store, err := storage.NewStorage(&serverCfg)
@@ -34,7 +37,7 @@ func main() {
 	handler.SetupRouters()
 
 	srv := &http.Server{
-		Addr:    serverCfg.ServerAddress + ":" + *serverPort,
+		Addr:    serverCfg.ServerAddress + ":" + serverPort,
 		Handler: handler.Router,
 	}
 
@@ -52,14 +55,13 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	// TODO try defer
 	func() {
-		fmt.Println("Defer func")
-		err := store.SaveToFile()
+		data, err := json.Marshal(&store.Storage)
+		if err != nil {
+			log.Fatalf("can't marshal json: %+v", err)
+		}
+		err = storage.SaveToFile(data, serverCfg.FileStoragePath)
 		if err != nil {
 			log.Fatalf("can't save stats to file: %+v", err)
-		}
-		err = store.File.Close()
-		if err != nil {
-			return
 		}
 		cancel()
 	}()
