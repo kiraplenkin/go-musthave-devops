@@ -3,6 +3,7 @@ package monitor
 import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"runtime"
+	"time"
 )
 
 // Monitor struct of Statistics
@@ -14,28 +15,29 @@ func NewMonitor() *Monitor {
 }
 
 // Get func generate types.Stats
-func (m *Monitor) Get() (types.Stats, error) {
-	//var newStats types.Stats
-	//newStats.StatsType = "Counter"
-	//newStats.StatsValue = strconv.Itoa(runtime.NumGoroutine())
-	//return newStats, nil
-	var s types.Stats
+func (m *Monitor) Get() (types.RequestStats, error) {
+	var s types.RequestStats
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 
-	// Number of goroutines
-	s.NumGoroutine = runtime.NumGoroutine()
+	id := uint(time.Now().UnixNano())
+	totalAlloc := uint(rtm.TotalAlloc)
+	sys := uint(rtm.Sys)
+	mallocs := uint(rtm.Mallocs)
+	frees := uint(rtm.Frees)
+	liveObjects := mallocs - frees
+	pauseTotalNs := uint(rtm.PauseTotalNs)
+	numGC := uint(rtm.NumGC)
+	numGoroutine := uint(runtime.NumGoroutine())
 
-	// Misc mem stats
-	s.Alloc = int(rtm.Alloc)
-	s.TotalAlloc = int(rtm.TotalAlloc)
-	s.Sys = int(rtm.Sys)
-	s.Mallocs = int(rtm.Mallocs)
-	s.Frees = int(rtm.Frees)
-	s.LiveObjects = int(s.Mallocs - s.Frees)
-
-	// GC stats
-	s.PauseTotalNs = int(rtm.PauseTotalNs)
-	s.NumGC = int(rtm.NumGC)
+	s.ID = id
+	s.TotalAlloc = totalAlloc
+	s.Sys = sys
+	s.Mallocs = mallocs
+	s.Frees = frees
+	s.LiveObjects = liveObjects
+	s.PauseTotalNs = pauseTotalNs
+	s.NumGC = numGC
+	s.NumGoroutine = numGoroutine
 	return s, nil
 }

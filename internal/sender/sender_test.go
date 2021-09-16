@@ -1,7 +1,6 @@
 package sender
 
 import (
-	"github.com/go-resty/resty/v2"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,7 +14,7 @@ type SendClientMock struct {
 }
 
 // Send mock-func for send types.Stats
-func (s *SendClientMock) Send(stats types.Stats) error {
+func (s *SendClientMock) Send(stats types.RequestStats) error {
 	args := s.Called(stats)
 	return args.Error(0)
 }
@@ -23,16 +22,16 @@ func (s *SendClientMock) Send(stats types.Stats) error {
 // TestSender_Send mock-test for sending types.Stats to server
 func TestSender_Send(t *testing.T) {
 	mockSender := new(SendClientMock)
-	testStats := types.Stats{
-		Alloc:        100,
-		TotalAlloc:   100,
-		Sys:          100,
-		Mallocs:      100,
-		Frees:        100,
-		LiveObjects:  100,
-		PauseTotalNs: 100,
-		NumGC:        100,
-		NumGoroutine: 100,
+	testStats := types.RequestStats{
+		ID:           1,
+		TotalAlloc:   101,
+		Sys:          102,
+		Mallocs:      103,
+		Frees:        104,
+		LiveObjects:  105,
+		PauseTotalNs: 106,
+		NumGC:        107,
+		NumGoroutine: 108,
 	}
 
 	mockSender.On("Send", testStats).Return(nil)
@@ -44,19 +43,18 @@ func TestSender_Send(t *testing.T) {
 
 // TestNewSender test for create SendClient
 func TestNewSender(t *testing.T) {
-	restyClient := resty.New()
 	tests := []struct {
 		name string
 		want *SendClient
 	}{
 		{
 			name: "Positive test",
-			want: NewSender(restyClient),
+			want: NewSender(),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, NewSender(restyClient))
+			assert.Equal(t, tt.want, NewSender())
 		})
 	}
 }

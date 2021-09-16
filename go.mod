@@ -3,6 +3,7 @@ module github.com/kiraplenkin/go-musthave-devops
 go 1.17
 
 require (
+	github.com/caarlos0/env/v6 v6.7.1
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/stretchr/testify v1.7.0

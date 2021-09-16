@@ -2,22 +2,36 @@ package http
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
+	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
+	"os"
 	"testing"
 )
 
 var (
 	contentType = "text/plain; charset=utf-8"
 	endpoint    = "/"
-	handler     = NewHandler(*storage.NewStorage())
+	testCfg = types.ServerConfig{
+		ServerAddress:   "localhost:8080",
+		FileStoragePath: "test_file",
+	}
+	testStore, _ = storage.NewStorage(&testCfg)
+	handler     = NewHandler(*testStore)
 )
+
+func TestDeleteTempFile(t *testing.T) {
+	defer func() {
+		err := os.Remove("test_file")
+		require.NoError(t, err)
+	}()
+}
 
 func TestGetAllStats(t *testing.T) {
 	type want struct {
@@ -36,15 +50,13 @@ func TestGetAllStats(t *testing.T) {
 			want: want{
 				code:        http.StatusOK,
 				contentType: contentType,
-				text:        "{map[]}",
+				text:        "map[]",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler.SetupRouters()
-			//path := fmt.Sprintf("%s", endpoint)
-			//path := endpoint
 
 			req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 			require.NoError(t, err)
@@ -126,71 +138,63 @@ func TestPostStat(t *testing.T) {
 
 	tests := []struct {
 		name string
-		data url.Values
+		data types.RequestStats
 		want want
 	}{
 		{
 			name: "Positive data",
-			data: func() url.Values {
-				v := url.Values{}
-				v.Set("id", "1")
-				v.Set("Alloc", "100")
-				v.Set("TotalAlloc", "101")
-				v.Set("Sys", "102")
-				v.Set("Mallocs", "103")
-				v.Set("Frees", "104")
-				v.Set("LiveObjects", "105")
-				v.Set("PauseTotalNs", "106")
-				v.Set("NumGC", "107")
-				v.Set("NumGoroutine", "108")
-				return v
-			}(),
+			data: types.RequestStats{
+				ID:           uint(1),
+				TotalAlloc:   uint(101),
+				Sys:          uint(102),
+				Mallocs:      uint(103),
+				Frees:        uint(104),
+				LiveObjects:  uint(105),
+				PauseTotalNs: uint(106),
+				NumGC:        uint(107),
+				NumGoroutine: uint(108),
+			},
 			want: want{
 				code: http.StatusCreated,
 			},
 		},
 		{
 			name: "Empty post data",
-			data: func() url.Values {
-				v := url.Values{}
-				return v
-			}(),
+			data: types.RequestStats{},
 			want: want{
-				code: http.StatusBadRequest,
+				code: http.StatusCreated,
 			},
 		},
 		{
 			name: "Empty Id",
-			data: func() url.Values {
-				v := url.Values{}
-				v.Set("id", "")
-				v.Set("Alloc", "100")
-				v.Set("TotalAlloc", "100")
-				v.Set("Sys", "100")
-				v.Set("Mallocs", "100")
-				v.Set("Frees", "100")
-				v.Set("LiveObjects", "100")
-				v.Set("PauseTotalNs", " 100")
-				v.Set("NumGC", "100")
-				v.Set("NumGoroutine", "100")
-				return v
-			}(),
+			data: types.RequestStats{
+				TotalAlloc:   uint(101),
+				Sys:          uint(102),
+				Mallocs:      uint(103),
+				Frees:        uint(104),
+				LiveObjects:  uint(105),
+				PauseTotalNs: uint(106),
+				NumGC:        uint(107),
+				NumGoroutine: uint(108),
+			},
 			want: want{
-				code: http.StatusBadRequest,
+				code: http.StatusCreated,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler.SetupRouters()
-			req := httptest.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(tt.data.Encode()))
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			r, err := json.Marshal(tt.data)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(string(r)))
+			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 			h := http.HandlerFunc(handler.PostStat)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
-			err := res.Body.Close()
+			err = res.Body.Close()
 			require.NoError(t, err)
 		})
 	}
@@ -218,7 +222,6 @@ func TestCheckHealth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler.SetupRouters()
-			//path := fmt.Sprintf("%s", endpoint)
 
 			req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 			require.NoError(t, err)

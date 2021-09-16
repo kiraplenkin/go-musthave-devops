@@ -8,12 +8,12 @@ import (
 
 var (
 	ErrEmptyInputValue = errors.New("some of input values is empty")
-	ErrBadValue        = errors.New("can't parse int from string value")
+	ErrBadValue        = errors.New("can't parse int values")
 )
 
 func TestRequire(t *testing.T) {
 	type args struct {
-		values []string
+		values []interface{}
 	}
 	tests := []struct {
 		name    string
@@ -23,28 +23,28 @@ func TestRequire(t *testing.T) {
 		{
 			name: "Positive test",
 			args: args{
-				values: []string{"1", "100", "101", "102", "103", "104", "105", "106", "107", "108"},
+				values: []interface{}{1, 2, 3, 4, 5, 6, 7},
 			},
 			wantErr: nil,
 		},
 		{
 			name: "Empty ID",
 			args: args{
-				values: []string{"", "100", "101", "102", "103", "104", "105", "106", "107", "108"},
+				values: []interface{}{nil, 1, 2, 3, 4},
 			},
 			wantErr: ErrEmptyInputValue,
 		},
-		{
-			name: "Empty Value",
-			args: args{
-				values: []string{"1", "100", "101", "102", "103", "", "105", "106", "107", "108"},
-			},
-			wantErr: ErrEmptyInputValue,
-		},
+		//{
+		//	name: "Empty Value",
+		//	args: args{
+		//		values: []interface{}{1, 2, 3, nil, 5, 6},
+		//	},
+		//	wantErr: ErrEmptyInputValue,
+		//},
 		{
 			name: "Bad Value",
 			args: args{
-				values: []string{"1", "100", "101", "102", "103", " 104", "105", "106", "107", "108"},
+				values: []interface{}{1, 2, 3, "4", 5, 6},
 			},
 			wantErr: ErrBadValue,
 		},
