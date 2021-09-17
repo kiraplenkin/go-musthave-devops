@@ -4,6 +4,7 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 )
 
@@ -135,6 +136,36 @@ func TestNewStorage(t *testing.T) {
 			newStorage, err := NewStorage(&cfg)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, newStorage)
+		})
+	}
+}
+
+func TestSaveToFile(t *testing.T) {
+	type args struct {
+		data     []byte
+		fileName string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "Positive test",
+			args: args{
+				data: []byte(`{"id":1,"value":2"}`),
+				fileName: "test_file.json",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := SaveToFile(tt.args.data, tt.args.fileName)
+			assert.Equal(t, tt.wantErr, err)
+			_, err = os.Stat(tt.args.fileName)
+			require.NoError(t, err)
+			defer os.Remove(tt.args.fileName)
 		})
 	}
 }
