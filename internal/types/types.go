@@ -53,7 +53,7 @@ var (
 	SenderConfig = Config{
 		Endpoint:         "/update/",
 		UpdateFrequency:  5,
-		ServerAddress:    "localhost",
+		ServerAddress:    "http://localhost",
 		ServerPort:       "8080",
 		RetryCount:       5,
 		RetryWaitTime:    10,
