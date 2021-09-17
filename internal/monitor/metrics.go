@@ -20,24 +20,12 @@ func (m *Monitor) Get() (types.RequestStats, error) {
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 
-	id := uint(time.Now().UnixNano())
-	totalAlloc := uint(rtm.TotalAlloc)
-	sys := uint(rtm.Sys)
-	mallocs := uint(rtm.Mallocs)
-	frees := uint(rtm.Frees)
-	liveObjects := mallocs - frees
-	pauseTotalNs := uint(rtm.PauseTotalNs)
-	numGC := uint(rtm.NumGC)
-	numGoroutine := uint(runtime.NumGoroutine())
-
-	s.ID = id
-	s.TotalAlloc = totalAlloc
-	s.Sys = sys
-	s.Mallocs = mallocs
-	s.Frees = frees
-	s.LiveObjects = liveObjects
-	s.PauseTotalNs = pauseTotalNs
-	s.NumGC = numGC
-	s.NumGoroutine = numGoroutine
+	s.ID = int(time.Now().UnixNano())
+	s.TotalAlloc = int(rtm.TotalAlloc)
+	s.Sys = int(rtm.Sys)
+	s.Mallocs = int(rtm.Mallocs)
+	s.Frees = int(rtm.Frees)
+	s.LiveObjects = int(rtm.Mallocs - rtm.Frees)
+	s.NumGoroutine = runtime.NumGoroutine()
 	return s, nil
 }

@@ -29,7 +29,7 @@ func NewStorage(cfg *types.ServerConfig) (*Store, error) {
 }
 
 // GetStatsByID get types.Stats by ID
-func (s *Store) GetStatsByID(ID uint) (*types.Stats, error) {
+func (s *Store) GetStatsByID(ID int) (*types.Stats, error) {
 	statsByID, ok := s.Storage[ID]
 	if !ok {
 		return nil, types.ErrCantGetStats
@@ -38,7 +38,7 @@ func (s *Store) GetStatsByID(ID uint) (*types.Stats, error) {
 }
 
 // SaveStats save types.Stats in Storage by ID
-func (s *Store) SaveStats(ID uint, stats types.Stats) error {
+func (s *Store) SaveStats(ID int, stats types.Stats) error {
 	s.Storage[ID] = stats
 	return nil
 }

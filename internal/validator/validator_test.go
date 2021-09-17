@@ -6,14 +6,11 @@ import (
 	"testing"
 )
 
-var (
-	ErrEmptyInputValue = errors.New("some of input values is empty")
-	ErrBadValue        = errors.New("can't parse int values")
-)
+var ErrEmptyValue = errors.New("some of input values is empty")
 
 func TestRequire(t *testing.T) {
 	type args struct {
-		values []interface{}
+		values []int
 	}
 	tests := []struct {
 		name    string
@@ -23,30 +20,23 @@ func TestRequire(t *testing.T) {
 		{
 			name: "Positive test",
 			args: args{
-				values: []interface{}{1, 2, 3, 4, 5, 6, 7},
+				values: []int{1, 2, 3, 4, 5, 6, 7},
 			},
 			wantErr: nil,
 		},
 		{
 			name: "Empty ID",
 			args: args{
-				values: []interface{}{nil, 1, 2, 3, 4},
+				values: []int{0, 1, 2, 3, 4, 5, 6},
 			},
-			wantErr: ErrEmptyInputValue,
+			wantErr: ErrEmptyValue,
 		},
-		//{
-		//	name: "Empty Value",
-		//	args: args{
-		//		values: []interface{}{1, 2, 3, nil, 5, 6},
-		//	},
-		//	wantErr: ErrEmptyInputValue,
-		//},
 		{
-			name: "Bad Value",
+			name: "Empty Value",
 			args: args{
-				values: []interface{}{1, 2, 3, "4", 5, 6},
+				values: []int{1, 2, 3, 0, 5, 6, 7},
 			},
-			wantErr: ErrBadValue,
+			wantErr: ErrEmptyValue,
 		},
 	}
 	for _, tt := range tests {

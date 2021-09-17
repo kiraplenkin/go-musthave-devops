@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var serverPort string
@@ -51,9 +52,8 @@ func main() {
 	log.Println("Server Started")
 
 	<-done
-	log.Println("Server Stopped")
-	ctx, cancel := context.WithCancel(context.Background())
-	// TODO try defer
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	func() {
 		data, err := json.Marshal(&store.Storage)
 		if err != nil {
@@ -63,7 +63,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("can't save stats to file: %+v", err)
 		}
-		cancel()
+
 	}()
 
 	if err := srv.Shutdown(ctx); err != nil {

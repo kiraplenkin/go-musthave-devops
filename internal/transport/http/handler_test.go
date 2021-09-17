@@ -2,7 +2,6 @@ package http
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
@@ -11,27 +10,19 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 )
 
 var (
 	contentType = "text/plain; charset=utf-8"
 	endpoint    = "/"
-	testCfg = types.ServerConfig{
+	testCfg     = types.ServerConfig{
 		ServerAddress:   "localhost:8080",
 		FileStoragePath: "test_file",
 	}
 	testStore, _ = storage.NewStorage(&testCfg)
-	handler     = NewHandler(*testStore)
+	handler      = NewHandler(*testStore)
 )
-
-func TestDeleteTempFile(t *testing.T) {
-	defer func() {
-		err := os.Remove("test_file")
-		require.NoError(t, err)
-	}()
-}
 
 func TestGetAllStats(t *testing.T) {
 	type want struct {
@@ -138,63 +129,56 @@ func TestPostStat(t *testing.T) {
 
 	tests := []struct {
 		name string
-		data types.RequestStats
+		data []byte
 		want want
 	}{
 		{
 			name: "Positive data",
-			data: types.RequestStats{
-				ID:           uint(1),
-				TotalAlloc:   uint(101),
-				Sys:          uint(102),
-				Mallocs:      uint(103),
-				Frees:        uint(104),
-				LiveObjects:  uint(105),
-				PauseTotalNs: uint(106),
-				NumGC:        uint(107),
-				NumGoroutine: uint(108),
-			},
+			data: []byte(`{"id":1,"totalAlloc":213880,"sys":8735760,"mallocs":760,"frees":11,"liveObjects":749,"numGoroutine":1}`),
 			want: want{
 				code: http.StatusCreated,
 			},
 		},
 		{
 			name: "Empty post data",
-			data: types.RequestStats{},
+			data: []byte("{}"),
 			want: want{
-				code: http.StatusCreated,
+				code: http.StatusBadRequest,
 			},
 		},
 		{
 			name: "Empty Id",
-			data: types.RequestStats{
-				TotalAlloc:   uint(101),
-				Sys:          uint(102),
-				Mallocs:      uint(103),
-				Frees:        uint(104),
-				LiveObjects:  uint(105),
-				PauseTotalNs: uint(106),
-				NumGC:        uint(107),
-				NumGoroutine: uint(108),
-			},
+			data: []byte(`{"totalAlloc":213880,"sys":8735760,"mallocs":760,"frees":11,"liveObjects":749,"numGoroutine":1}`),
 			want: want{
-				code: http.StatusCreated,
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Bad value",
+			data: []byte(`{"id":1,"totalAlloc":"213880","sys":8735760,"mallocs":760,"frees":11,"liveObjects":749,"numGoroutine":1}`),
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Empty value",
+			data: []byte(`{"id":1,"sys":8735760,"mallocs":760,"frees":11,"liveObjects":749,"numGoroutine":1}`),
+			want: want{
+				code: http.StatusBadRequest,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler.SetupRouters()
-			r, err := json.Marshal(tt.data)
-			require.NoError(t, err)
-			req := httptest.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(string(r)))
+			req := httptest.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(string(tt.data)))
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 			h := http.HandlerFunc(handler.PostStat)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
-			err = res.Body.Close()
+			err := res.Body.Close()
 			require.NoError(t, err)
 		})
 	}

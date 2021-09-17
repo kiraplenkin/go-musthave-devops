@@ -1,12 +1,15 @@
 package sender
 
 import (
+	"github.com/go-resty/resty/v2"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
+
+var restyClient = resty.New()
 
 // SendClientMock mock-struct of SendClient
 type SendClientMock struct {
@@ -29,8 +32,6 @@ func TestSender_Send(t *testing.T) {
 		Mallocs:      103,
 		Frees:        104,
 		LiveObjects:  105,
-		PauseTotalNs: 106,
-		NumGC:        107,
 		NumGoroutine: 108,
 	}
 
@@ -49,12 +50,12 @@ func TestNewSender(t *testing.T) {
 	}{
 		{
 			name: "Positive test",
-			want: NewSender(),
+			want: NewSender(restyClient),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, NewSender())
+			assert.Equal(t, tt.want, NewSender(restyClient))
 		})
 	}
 }

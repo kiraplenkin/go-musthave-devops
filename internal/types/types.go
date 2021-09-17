@@ -30,25 +30,21 @@ type (
 		Mallocs      int
 		Frees        int
 		LiveObjects  int
-		PauseTotalNs int
-		NumGC        int
 		NumGoroutine int
 	}
 
 	// Storage struct of storage
-	Storage map[uint]Stats
+	Storage map[int]Stats
 
 	// RequestStats struct to transport by JSON
 	RequestStats struct {
-		ID           uint `json:"id,omitempty"`
-		TotalAlloc   uint `json:"totalAlloc,omitempty"`
-		Sys          uint `json:"sys,omitempty"`
-		Mallocs      uint `json:"mallocs,omitempty"`
-		Frees        uint `json:"frees,omitempty"`
-		LiveObjects  uint `json:"liveObjects,omitempty"`
-		PauseTotalNs uint `json:"pauseTotalNs,omitempty"`
-		NumGC        uint `json:"numGC,omitempty"`
-		NumGoroutine uint `json:"numGoroutine,omitempty"`
+		ID           int `json:"id"`
+		TotalAlloc   int `json:"totalAlloc"`
+		Sys          int `json:"sys"`
+		Mallocs      int `json:"mallocs"`
+		Frees        int `json:"frees"`
+		LiveObjects  int `json:"liveObjects"`
+		NumGoroutine int `json:"numGoroutine"`
 	}
 )
 

@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -15,12 +16,12 @@ var (
 				Mallocs:      100,
 				Frees:        100,
 				LiveObjects:  100,
-				PauseTotalNs: 100,
-				NumGC:        100,
 				NumGoroutine: 100,
 			},
 		},
 	}
+	cfg            = types.ServerConfig{ServerAddress: "localhost", FileStoragePath: "test_file"}
+	testStorage, _ = NewStorage(&cfg)
 )
 
 // TestStore_GetStatsByID test for getting types.Stats by ID from types.Storage
@@ -28,7 +29,7 @@ func TestStore_GetStatsByID(t *testing.T) {
 
 	tests := []struct {
 		name string
-		args uint
+		args int
 		want *types.Stats
 		err  error
 	}{
@@ -41,8 +42,6 @@ func TestStore_GetStatsByID(t *testing.T) {
 				Mallocs:      100,
 				Frees:        100,
 				LiveObjects:  100,
-				PauseTotalNs: 100,
-				NumGC:        100,
 				NumGoroutine: 100,
 			},
 			err: nil,
@@ -66,7 +65,7 @@ func TestStore_GetStatsByID(t *testing.T) {
 // TestStore_SaveStats test for saving types.Stats to Store
 func TestStore_SaveStats(t *testing.T) {
 	type args struct {
-		ID    uint
+		ID    int
 		stats types.Stats
 	}
 	tests := []struct {
@@ -84,8 +83,6 @@ func TestStore_SaveStats(t *testing.T) {
 					Mallocs:      100,
 					Frees:        100,
 					LiveObjects:  100,
-					PauseTotalNs: 100,
-					NumGC:        100,
 					NumGoroutine: 100,
 				},
 			},
@@ -118,10 +115,26 @@ func TestStore_GetAllStats(t *testing.T) {
 			testedStore, err := store.GetAllStats()
 			assert.Equal(t, tt.want, testedStore)
 			assert.Equal(t, tt.err, err)
-			//err = os.Remove("test_file")
-			//if err != nil {
-			//	require.NoError(t, err)
-			//}
+		})
+	}
+}
+
+// TestNewStorage test for creating new storage
+func TestNewStorage(t *testing.T) {
+	tests := []struct {
+		name string
+		want *Store
+	}{
+		{
+			name: "Positive test",
+			want: testStorage,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			newStorage, err := NewStorage(&cfg)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, newStorage)
 		})
 	}
 }

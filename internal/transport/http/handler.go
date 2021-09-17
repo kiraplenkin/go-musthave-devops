@@ -7,6 +7,7 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/kiraplenkin/go-musthave-devops/internal/validator"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -39,13 +40,13 @@ func (h *Handler) SetupRouters() {
 func (h *Handler) GetStatsByID(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	i, err := strconv.ParseUint(id, 10, 64)
+	i, err := strconv.Atoi(id)
 	if err != nil {
 		http.Error(w, "Unable to parse uint from id", http.StatusBadRequest)
 		return
 	}
 
-	stat, err := h.Storage.GetStatsByID(uint(i))
+	stat, err := h.Storage.GetStatsByID(i)
 	if err != nil {
 		http.Error(w, "Can't get stat by this ID", http.StatusBadRequest)
 		return
@@ -73,44 +74,43 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 
 //PostStat handler that save types.Stats to storage.Store
 func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "can't read body", http.StatusBadRequest)
+		return
+	}
 	var requestStats types.RequestStats
 
-	err := decoder.Decode(&requestStats)
+	err = json.Unmarshal(body, &requestStats)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "can't decode input json", http.StatusInternalServerError)
+		http.Error(w, "can't decode input json", http.StatusBadRequest)
+		return
 	}
 
-	id := requestStats.ID
-	totalAlloc := requestStats.TotalAlloc
-	sys := requestStats.Sys
-	mallocs := requestStats.Mallocs
-	frees := requestStats.Frees
-	liveObjects := requestStats.LiveObjects
-	pauseTotalNs := requestStats.PauseTotalNs
-	numGC := requestStats.NumGC
-	numGoroutine := requestStats.NumGoroutine
-
 	err = validator.Require(
-		id, totalAlloc, sys, mallocs, frees, liveObjects, pauseTotalNs, numGC, numGoroutine,
+		requestStats.ID,
+		requestStats.TotalAlloc,
+		requestStats.Sys,
+		requestStats.Mallocs,
+		requestStats.Frees,
+		requestStats.LiveObjects,
+		requestStats.NumGoroutine,
 	)
 	if err != nil {
-		http.Error(w, error.Error(err), http.StatusBadRequest)
+		http.Error(w, "can't save stat", http.StatusBadRequest)
+		return
 	}
 
 	newStat := types.Stats{
-		TotalAlloc:   int(totalAlloc),
-		Sys:          int(sys),
-		Mallocs:      int(mallocs),
-		Frees:        int(frees),
-		LiveObjects:  int(liveObjects),
-		PauseTotalNs: int(pauseTotalNs),
-		NumGC:        int(numGC),
-		NumGoroutine: int(numGoroutine),
+		TotalAlloc:   requestStats.TotalAlloc,
+		Sys:          requestStats.Sys,
+		Mallocs:      requestStats.Mallocs,
+		Frees:        requestStats.Frees,
+		LiveObjects:  requestStats.LiveObjects,
+		NumGoroutine: requestStats.NumGoroutine,
 	}
 
-	err = h.Storage.SaveStats(id, newStat)
+	err = h.Storage.SaveStats(requestStats.ID, newStat)
 	if err != nil {
 		http.Error(w, "can't save stat", http.StatusInternalServerError)
 		return

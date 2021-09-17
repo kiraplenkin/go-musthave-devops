@@ -35,7 +35,7 @@ func main() {
 		SetRetryWaitTime(types.SenderConfig.RetryWaitTime).
 		SetRetryMaxWaitTime(types.SenderConfig.RetryMaxWaitTime)
 
-	sender := sendingService.NewSender()
+	sender := sendingService.NewSender(restyClient)
 	monitor := monitorService.NewMonitor()
 
 	for {
@@ -46,7 +46,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		err = sender.Send(*restyClient, stats, types.SenderConfig.ServerAddress, types.SenderConfig.ServerPort)
+		err = sender.Send(stats, types.SenderConfig.ServerAddress, types.SenderConfig.ServerPort)
 		if err != nil {
 			fmt.Println(err)
 			return
