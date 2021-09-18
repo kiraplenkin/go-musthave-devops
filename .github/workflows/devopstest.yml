@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - Third_sprint
+      - new_stats
 jobs:
 
   devopstest:

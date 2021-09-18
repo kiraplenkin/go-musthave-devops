@@ -33,8 +33,14 @@ type (
 		NumGoroutine int
 	}
 
+	Metric struct {
+		ID    string `json:"id"`
+		Type  string `json:"type"`
+		Value string `json:"value"`
+	}
+
 	// Storage struct of storage
-	Storage map[int]Stats
+	Storage map[string]Metric
 
 	// RequestStats struct to transport by JSON
 	RequestStats struct {

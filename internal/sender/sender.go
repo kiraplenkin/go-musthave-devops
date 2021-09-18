@@ -19,12 +19,11 @@ func NewSender(resty *resty.Client) *SendClient {
 }
 
 // Send func send data with sender.SendClient
-func (s *SendClient) Send(stats types.RequestStats, serverAddress, serverPort string) error {
+func (s *SendClient) Send(stats []types.Metric, serverAddress, serverPort string) error {
 	r, err := json.Marshal(stats)
 	if err != nil {
 		return err
 	}
-
 	post, err := s.resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(bytes.NewBufferString(string(r))).
