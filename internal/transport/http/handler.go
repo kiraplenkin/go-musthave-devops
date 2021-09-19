@@ -194,7 +194,7 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(stat); err != nil {
-		http.Error(w, "unable to marshal the struct", http.StatusBadRequest)
+		http.Error(w, "unable to marshal the struct", http.StatusOK)
 		return
 	}
 }
