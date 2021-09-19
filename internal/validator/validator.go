@@ -13,3 +13,12 @@ func Require(values ...int) error {
 	}
 	return nil
 }
+
+func RequireNew(values ...string) error {
+	for _, v := range values {
+		if v == "" {
+			return fmt.Errorf("some of input values is empty")
+		}
+	}
+	return nil
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
+	"github.com/kiraplenkin/go-musthave-devops/internal/validator"
 	"io/ioutil"
 	"net/http"
 )
@@ -142,13 +143,11 @@ func (h Handler) PostUrlStat(w http.ResponseWriter, r *http.Request) {
 	statsType := r.Form.Get("type")
 	statsValue := r.Form.Get("value")
 
-	//err = validator.Require(
-	//	id, alloc, totalAlloc, sys, mallocs, frees, liveObjects, pauseTotalNs, numGC, numGoroutine,
-	//)
-	//if err != nil {
-	//	http.Error(w, error.Error(err), http.StatusBadRequest)
-	//	return
-	//}
+	err = validator.RequireNew(id, statsType, statsValue)
+	if err != nil {
+		http.Error(w, error.Error(err), http.StatusBadRequest)
+		return
+	}
 
 	newStat := types.Metric{
 		ID: id,
@@ -176,10 +175,3 @@ func (h Handler) CheckHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func (h Handler) Monitor(w http.ResponseWriter, r *http.Request) {
-	url := r.RequestURI
-	_, err := fmt.Fprintf(w, "hello from %s", url)
-	if err != nil {
-		return
-	}
-}
