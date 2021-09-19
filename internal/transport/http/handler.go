@@ -27,8 +27,8 @@ func NewHandler(s storage.Store) *Handler {
 func (h *Handler) SetupRouters() {
 	h.Router = mux.NewRouter()
 
-	h.Router.HandleFunc("/stats/{id}", h.GetStatsByID).Methods(http.MethodGet)
-	h.Router.HandleFunc("/stats/", h.GetAllStats).Methods(http.MethodGet)
+	h.Router.HandleFunc("/{id}", h.GetStatsByID).Methods(http.MethodGet)
+	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/update/", h.PostStat).Methods(http.MethodPost)
 
 	h.Router.HandleFunc("/health/", h.CheckHealth).Methods(http.MethodGet)
@@ -50,10 +50,15 @@ func (h *Handler) GetStatsByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = fmt.Fprintf(w, "%+v", stat)
-	if err != nil {
-		http.Error(w, error.Error(err), http.StatusInternalServerError)
+	if err := json.NewEncoder(w).Encode(stat); err != nil {
+		http.Error(w, "unable to marshal the struct", http.StatusBadRequest)
+		return
 	}
+
+	//_, err = fmt.Fprintf(w, "%+v", stat)
+	//if err != nil {
+	//	http.Error(w, error.Error(err), http.StatusInternalServerError)
+	//}
 }
 
 //GetAllStats handler that return all values from storage.Store
