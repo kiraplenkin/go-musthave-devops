@@ -19,7 +19,7 @@ type (
 
 	// ServerConfig config for server app
 	ServerConfig struct {
-		ServerAddress   string `env:"SERVER_ADDRESS" envDefault:"localhost"`
+		ServerAddress   string `env:"SERVER_ADDRESS" envDefault:"127.0.0.1"`
 		FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"test.json"`
 	}
 

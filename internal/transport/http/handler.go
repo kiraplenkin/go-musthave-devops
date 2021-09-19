@@ -31,7 +31,7 @@ func (h *Handler) SetupRouters() {
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/update/", h.PostStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/", h.PostStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/value/{id}", h.GetStatsByID).Methods(http.MethodGet)
+	h.Router.HandleFunc("/value/", h.GetAllStats).Methods(http.MethodGet)
 
 	h.Router.HandleFunc("/health/", h.CheckHealth).Methods(http.MethodGet)
 }
