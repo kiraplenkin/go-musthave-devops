@@ -29,8 +29,7 @@ func (h *Handler) SetupRouters() {
 	h.Router = mux.NewRouter()
 	h.Router.HandleFunc("/{id}", h.GetStatsByID).Methods(http.MethodGet)
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
-	h.Router.HandleFunc("/update/", h.PostJsonStat).Methods(http.MethodPost)
-	//h.Router.HandleFunc("/updater/", h.PostJsonStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/update", h.PostJsonStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/", h.PostUrlStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
 
