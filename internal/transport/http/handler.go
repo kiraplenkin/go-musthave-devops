@@ -31,7 +31,7 @@ func (h *Handler) SetupRouters() {
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/update/", h.PostStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/", h.PostStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/value/", h.Monitor).Methods(http.MethodGet)
+	h.Router.HandleFunc("/value/", h.GetAllStats).Methods(http.MethodGet)
 
 	h.Router.HandleFunc("/health/", h.CheckHealth).Methods(http.MethodGet)
 }
@@ -138,10 +138,10 @@ func (h Handler) CheckHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func (h Handler) Monitor(w http.ResponseWriter, r *http.Request) {
-	url := r.RequestURI
-	_, err := fmt.Fprintf(w, "hello from %s", url)
-	if err != nil {
-		return
-	}
-}
+//func (h Handler) Monitor(w http.ResponseWriter, r *http.Request) {
+//	url := r.RequestURI
+//	_, err := fmt.Fprintf(w, "hello from %s", url)
+//	if err != nil {
+//		return
+//	}
+//}
