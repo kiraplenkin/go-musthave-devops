@@ -27,13 +27,12 @@ func NewHandler(s storage.Store) *Handler {
 // SetupRouters sets up all the routes for server
 func (h *Handler) SetupRouters() {
 	h.Router = mux.NewRouter()
-
 	h.Router.HandleFunc("/{id}", h.GetStatsByID).Methods(http.MethodGet)
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/update/", h.PostJsonStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/updater/", h.PostJsonStat).Methods(http.MethodPost)
+	//h.Router.HandleFunc("/updater/", h.PostJsonStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/", h.PostUrlStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/value/", h.GetAllStats).Methods(http.MethodPost)
+	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
 
 	h.Router.HandleFunc("/health/", h.CheckHealth).Methods(http.MethodGet)
 }
@@ -180,3 +179,23 @@ func (h Handler) CheckHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+// GetStatsByType ...
+func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
+	statsType := mux.Vars(r)["type"]
+	if statsType != "gauge" && statsType != "counter" {
+		http.Error(w, "Can't save stat", http.StatusNotImplemented)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	stat, err := h.Storage.GetStatsByID(id)
+	if err != nil {
+		http.Error(w, "Can't get stat by this ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(stat); err != nil {
+		http.Error(w, "unable to marshal the struct", http.StatusBadRequest)
+		return
+	}
+}
