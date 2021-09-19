@@ -9,7 +9,6 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/validator"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 // Handler stores pointers to service
@@ -149,9 +148,9 @@ func (h Handler) PostUrlStat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, error.Error(err), http.StatusBadRequest)
 		return
 	}
-	_, err = strconv.Atoi(statsValue)
-	if err != nil {
-		http.Error(w, error.Error(err), http.StatusOK)
+
+	if statsType != "gauge" && statsType != "counter" {
+		http.Error(w, "Can't save stat", http.StatusNotImplemented)
 		return
 	}
 
