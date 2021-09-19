@@ -29,9 +29,9 @@ func (h *Handler) SetupRouters() {
 
 	h.Router.HandleFunc("/{id}", h.GetStatsByID).Methods(http.MethodGet)
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
-	h.Router.HandleFunc("/update/", h.PostStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/updater/", h.PostStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/", h.PostStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/update/", h.PostJsonStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/updater/", h.PostJsonStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/", h.PostUrlStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/", h.GetAllStats).Methods(http.MethodPost)
 
 	h.Router.HandleFunc("/health/", h.CheckHealth).Methods(http.MethodGet)
@@ -78,8 +78,8 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-//PostStat handler that save types.Stats to storage.Store
-func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
+//PostJsonStat handler that save json request to storage.Store
+func (h Handler) PostJsonStat(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "can't read body", http.StatusBadRequest)
@@ -131,6 +131,43 @@ func (h Handler) PostStat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PostUrlStat ...
+func (h Handler) PostUrlStat(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "can't parse form", http.StatusInternalServerError)
+	}
+
+	id := r.Form.Get("id")
+	statsType := r.Form.Get("type")
+	statsValue := r.Form.Get("value")
+
+	//err = validator.Require(
+	//	id, alloc, totalAlloc, sys, mallocs, frees, liveObjects, pauseTotalNs, numGC, numGoroutine,
+	//)
+	//if err != nil {
+	//	http.Error(w, error.Error(err), http.StatusBadRequest)
+	//	return
+	//}
+
+	newStat := types.Metric{
+		ID: id,
+		Type: statsType,
+		Value: statsValue,
+	}
+	err = h.Storage.SaveStats(id, newStat)
+	if err != nil {
+		http.Error(w, "Can't save stat", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	_, err = fmt.Fprintf(w, "%+v", newStat)
+	if err != nil {
+		return
+	}
+	fmt.Printf("%+v", newStat)
+}
+
 // CheckHealth handler to check health
 func (h Handler) CheckHealth(w http.ResponseWriter, _ *http.Request) {
 	_, err := fmt.Fprintf(w, "alive!")
@@ -139,10 +176,10 @@ func (h Handler) CheckHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-//func (h Handler) Monitor(w http.ResponseWriter, r *http.Request) {
-//	url := r.RequestURI
-//	_, err := fmt.Fprintf(w, "hello from %s", url)
-//	if err != nil {
-//		return
-//	}
-//}
+func (h Handler) Monitor(w http.ResponseWriter, r *http.Request) {
+	url := r.RequestURI
+	_, err := fmt.Fprintf(w, "hello from %s", url)
+	if err != nil {
+		return
+	}
+}
