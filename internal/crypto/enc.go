@@ -23,9 +23,6 @@ func EncodeDecode(rawData []byte, operationType string) ([]byte, error) {
 	}
 
 	nonce := []byte(os.Getenv("NONCE_KEY"))
-	if err != nil {
-		return nil, err
-	}
 
 	if operationType == "encode" {
 		encodedData := aesGcm.Seal(nil, nonce, rawData, nil)
