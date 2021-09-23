@@ -39,7 +39,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    serverCfg.ServerAddress + ":" + serverPort,
-		Handler: handler.Router,
+		Handler: transportHTTP.GzipHandle(handler.Router),
 	}
 
 	done := make(chan os.Signal, 1)

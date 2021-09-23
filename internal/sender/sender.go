@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/go-resty/resty/v2"
+	"github.com/kiraplenkin/go-musthave-devops/internal/crypto"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"net/http"
 )
@@ -20,14 +21,25 @@ func NewSender(resty *resty.Client) *SendClient {
 
 // Send func send data with sender.SendClient
 func (s *SendClient) Send(stats types.RequestStats, serverAddress, serverPort string) error {
-	r, err := json.Marshal(stats)
+	rawRequest, err := json.Marshal(stats)
+	if err != nil {
+		return err
+	}
+
+	compressRequest, err := crypto.Compress(rawRequest)
+	if err != nil {
+		return err
+	}
+
+	encodedRequest, err := crypto.EncodeDecode(compressRequest, "encode")
 	if err != nil {
 		return err
 	}
 
 	post, err := s.resty.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(bytes.NewBufferString(string(r))).
+		SetHeader("Content-Encoding", "gzip").
+		SetBody(bytes.NewBufferString(string(encodedRequest))).
 		Post(serverAddress + ":" + serverPort + types.SenderConfig.Endpoint)
 	if err != nil {
 		return nil
