@@ -1,40 +1,52 @@
-package crypto
+package transformation
 
 import (
 	"bytes"
 	"compress/flate"
-	"crypto/aes"
-	"crypto/cipher"
+	"compress/gzip"
 	"fmt"
 	"io"
-	"os"
+	"net/http"
+	"strings"
 )
 
-// EncodeDecode func to encode and decode request
-func EncodeDecode(rawData []byte, operationType string) ([]byte, error) {
-	aesBlock, err := aes.NewCipher([]byte(os.Getenv("CIPHER_KEY")))
-	if err != nil {
-		return nil, err
-	}
+// GzipWriter ...
+type gzipWriter struct {
+	http.ResponseWriter
+	Writer io.Writer
+}
 
-	aesGcm, err := cipher.NewGCM(aesBlock)
-	if err != nil {
-		return nil, err
-	}
+// Write ...
+func (w gzipWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
 
-	nonce := []byte(os.Getenv("NONCE_KEY"))
-
-	if operationType == "encode" {
-		encodedData := aesGcm.Seal(nil, nonce, rawData, nil)
-		return encodedData, nil
-	} else if operationType == "decode" {
-		decodedData, err := aesGcm.Open(nil, nonce, rawData, nil)
-		if err != nil {
-			return nil, err
+// GzipHandle handle which compress all handlers
+func GzipHandle(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			next.ServeHTTP(w, r)
+			return
 		}
-		return decodedData, nil
-	}
-	return nil, fmt.Errorf("can't make operation")
+
+		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
+		if err != nil {
+			_, err := io.WriteString(w, err.Error())
+			if err != nil {
+				return
+			}
+			return
+		}
+		defer func(gz *gzip.Writer) {
+			err := gz.Close()
+			if err != nil {
+				return
+			}
+		}(gz)
+
+		w.Header().Set("Content-Encoding", "gzip")
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
+	})
 }
 
 // Compress func to compress types.Stats

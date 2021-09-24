@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/go-resty/resty/v2"
-	"github.com/kiraplenkin/go-musthave-devops/internal/crypto"
+	"github.com/kiraplenkin/go-musthave-devops/internal/transformation"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"net/http"
 )
@@ -26,12 +26,12 @@ func (s *SendClient) Send(stats types.RequestStats, serverAddress, serverPort st
 		return err
 	}
 
-	compressRequest, err := crypto.Compress(rawRequest)
+	compressRequest, err := transformation.Compress(rawRequest)
 	if err != nil {
 		return err
 	}
 
-	encodedRequest, err := crypto.EncodeDecode(compressRequest, "encode")
+	encodedRequest, err := transformation.EncodeDecode(compressRequest, "encode")
 	if err != nil {
 		return err
 	}
