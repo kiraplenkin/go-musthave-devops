@@ -30,7 +30,7 @@ func (h *Handler) SetupRouters() {
 	h.Router.HandleFunc("/{id}", h.GetStatsByID).Methods(http.MethodGet)
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	//h.Router.HandleFunc("/update", h.PostJsonStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostUrlStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
 
 	h.Router.HandleFunc("/health/", h.CheckHealth).Methods(http.MethodGet)
@@ -124,8 +124,8 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 //	}
 //}
 
-// PostUrlStat ...
-func (h Handler) PostUrlStat(w http.ResponseWriter, r *http.Request) {
+// PostURLStat ...
+func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	statsType := mux.Vars(r)["type"]
 	statsValue := mux.Vars(r)["value"]

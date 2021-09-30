@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
@@ -26,8 +25,10 @@ func main() {
 		return
 	}
 
-	flag.StringVar(&serverPort, "p", "8080", "port to run server")
-	flag.Parse()
+	serverPort = "8080"
+
+	//flag.StringVar(&serverPort, "p", "8080", "port to run server")
+	//flag.Parse()
 
 	store, err := storage.NewStorage(&serverCfg)
 	if err != nil {
