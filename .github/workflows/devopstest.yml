@@ -40,8 +40,8 @@ jobs:
         run: |
           chmod -R +x $GITHUB_WORKSPACE/.tools
           cd $GITHUB_WORKSPACE/.tools
-          wget https://github.com/Yandex-Practicum/go-autotests-bin/raw/main/.tools/devopstest
-          wget https://github.com/Yandex-Practicum/go-autotests-bin/raw/main/.tools/random
+          wget https://github.com/Yandex-Practicum/go-autotests-bin/blob/main/devopstest
+          wget https://github.com/Yandex-Practicum/go-autotests-bin/blob/main/random
           mv $GITHUB_WORKSPACE/.tools/devopstest /usr/local/bin/devopstest
           mv $GITHUB_WORKSPACE/.tools/random /usr/local/bin/random
 
