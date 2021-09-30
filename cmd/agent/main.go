@@ -46,10 +46,14 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		err = sender.Send(stats, types.SenderConfig.ServerAddress, types.SenderConfig.ServerPort)
-		if err != nil {
-			fmt.Println(err)
-			return
+		for _, stat := range stats {
+			fmt.Println(stat)
+			err = sender.Send(stat, types.SenderConfig.ServerAddress, types.SenderConfig.ServerPort)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 		}
+
 	}
 }

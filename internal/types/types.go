@@ -25,44 +25,29 @@ type (
 
 	// Stats struct to save stats
 	Stats struct {
-		TotalAlloc   int
-		Sys          int
-		Mallocs      int
-		Frees        int
-		LiveObjects  int
-		NumGoroutine int
+		Type  string
+		Value float64
 	}
 
 	Metric struct {
-		ID    string `json:"id"`
-		Type  string `json:"type"`
-		Value string `json:"value"`
+		ID    string  `json:"id"`
+		Type  string  `json:"type"`
+		Value float64 `json:"value"`
 	}
 
 	// Storage struct of storage
-	Storage map[string]Metric
-
-	// RequestStats struct to transport by JSON
-	RequestStats struct {
-		ID           int `json:"id"`
-		TotalAlloc   int `json:"totalAlloc"`
-		Sys          int `json:"sys"`
-		Mallocs      int `json:"mallocs"`
-		Frees        int `json:"frees"`
-		LiveObjects  int `json:"liveObjects"`
-		NumGoroutine int `json:"numGoroutine"`
-	}
+	Storage map[string]Stats
 )
 
 var (
 	// SenderConfig config for sender service
 	SenderConfig = Config{
 		Endpoint:         "/update/",
-		UpdateFrequency:  5,
+		UpdateFrequency:  10,
 		ServerAddress:    "http://127.0.0.1",
 		ServerPort:       "8080",
-		RetryCount:       5,
-		RetryWaitTime:    10,
+		RetryCount:       10,
+		RetryWaitTime:    5,
 		RetryMaxWaitTime: 30,
 	}
 

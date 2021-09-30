@@ -19,8 +19,8 @@ func NewSender(resty *resty.Client) *SendClient {
 }
 
 // Send func send data with sender.SendClient
-func (s *SendClient) Send(stats []types.Metric, serverAddress, serverPort string) error {
-	r, err := json.Marshal(stats)
+func (s *SendClient) Send(stat types.Metric, serverAddress, serverPort string) error {
+	r, err := json.Marshal(stat)
 	if err != nil {
 		return err
 	}
