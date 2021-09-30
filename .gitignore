@@ -5,6 +5,7 @@
 *.so
 *.dylib
 *.sqlite3
+test.json
 
 # Test binary, built with `go test -c`
 *.test
