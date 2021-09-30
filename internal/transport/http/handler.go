@@ -30,7 +30,7 @@ func (h *Handler) SetupRouters() {
 	h.Router.HandleFunc("/{id}", h.GetStatsByID).Methods(http.MethodGet)
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	//h.Router.HandleFunc("/update", h.PostJsonStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/", h.PostUrlStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostUrlStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
 
 	h.Router.HandleFunc("/health/", h.CheckHealth).Methods(http.MethodGet)
@@ -39,12 +39,6 @@ func (h *Handler) SetupRouters() {
 //GetStatsByID handler that return types.Stats by ID
 func (h *Handler) GetStatsByID(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-
-	//i, err := strconv.Atoi(id)
-	//if err != nil {
-	//	http.Error(w, "Unable to parse uint from id", http.StatusBadRequest)
-	//	return
-	//}
 
 	stat, err := h.Storage.GetStatsByID(id)
 	if err != nil {
@@ -132,16 +126,11 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 
 // PostUrlStat ...
 func (h Handler) PostUrlStat(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "can't parse form", http.StatusInternalServerError)
-	}
+	id := mux.Vars(r)["id"]
+	statsType := mux.Vars(r)["type"]
+	statsValue := mux.Vars(r)["value"]
 
-	id := r.Form.Get("id")
-	statsType := r.Form.Get("type")
-	statsValue := r.Form.Get("value")
-
-	err = validator.RequireNew(id, statsType, statsValue)
+	err := validator.Require(id, statsType, statsValue)
 	if err != nil {
 		http.Error(w, error.Error(err), http.StatusBadRequest)
 		return
@@ -171,7 +160,6 @@ func (h Handler) PostUrlStat(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	fmt.Printf("%+v", newStat)
 }
 
 // CheckHealth handler to check health
