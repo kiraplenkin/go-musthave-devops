@@ -39,6 +39,7 @@ jobs:
 
       - name: Setup autotest binary
         run: |
+          chmod +x /usr/local/bin/devopstest
           chmod -R +x $GITHUB_WORKSPACE/.tools
           mv $GITHUB_WORKSPACE/.tools/devopstest /usr/local/bin/devopstest
           mv $GITHUB_WORKSPACE/.tools/random /usr/local/bin/random
