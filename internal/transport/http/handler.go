@@ -161,7 +161,7 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "can't save stat", http.StatusInternalServerError)
 				return
 			}
-			w.WriteHeader(http.StatusCreated)
+			w.WriteHeader(http.StatusOK)
 		} else {
 			err = h.Storage.UpdateGaugeStats(id, newStat)
 			if err != nil {
@@ -197,7 +197,7 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 		}
 		stat, err := h.Storage.GetStatsByID(id)
 		if err != nil {
-			http.Error(w, "can't get stat by this ID", http.StatusBadRequest)
+			http.Error(w, "can't get stat by this ID", http.StatusNotFound)
 			return
 		}
 		_, err = fmt.Fprintf(w, "%+v", stat.Value)
@@ -207,7 +207,7 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 	} else if statsType == "counter" {
 		stat, err := h.Storage.GetStatsByID(id)
 		if err != nil {
-			http.Error(w, "can't get stat by this ID", http.StatusBadRequest)
+			http.Error(w, "can't get stat by this ID", http.StatusNotFound)
 			return
 		}
 		_, err = fmt.Fprintf(w, "%+v", stat.Value)
