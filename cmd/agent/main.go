@@ -6,6 +6,9 @@ import (
 	monitorService "github.com/kiraplenkin/go-musthave-devops/internal/monitor"
 	sendingService "github.com/kiraplenkin/go-musthave-devops/internal/sender"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -34,24 +37,31 @@ func main() {
 		SetRetryWaitTime(types.SenderConfig.RetryWaitTime).
 		SetRetryMaxWaitTime(types.SenderConfig.RetryMaxWaitTime)
 
-	sender := sendingService.NewSender(restyClient)
 	monitor := monitorService.NewMonitor()
+	sender := sendingService.NewSender(restyClient, monitor)
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
-	for {
-		ticker := time.NewTicker(types.SenderConfig.UpdateFrequency * time.Second)
-		<-ticker.C
-		stats, err := monitor.Get()
-		if err != nil {
-			fmt.Println(err)
-			return
+	pollIntervalTicker := time.NewTicker(types.SenderConfig.UpdateFrequency * time.Second)
+	reportIntervalTicker := time.NewTicker(types.SenderConfig.ReportFrequency * time.Second)
+
+	go func() {
+		for {
+			<-pollIntervalTicker.C
+			monitor.Update()
 		}
-		for _, stat := range stats {
-			err = sender.Send(stat, types.SenderConfig.ServerAddress, types.SenderConfig.ServerPort)
+	}()
+
+	go func() {
+		for {
+			<-reportIntervalTicker.C
+			err := sender.Send(types.SenderConfig.ServerAddress, types.SenderConfig.ServerPort)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 		}
+	}()
 
-	}
+	<-done
 }

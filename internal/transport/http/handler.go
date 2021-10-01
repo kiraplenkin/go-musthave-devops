@@ -136,28 +136,48 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if statsType != "gauge" && statsType != "counter" {
+	if statsType == "gauge" {
+		convertedStatsValue, err := strconv.ParseFloat(statsValue, 64)
+		if err != nil {
+			http.Error(w, error.Error(err), http.StatusBadRequest)
+			return
+		}
+		newStat := types.Stats{
+			Type:  statsType,
+			Value: convertedStatsValue,
+		}
+		err = h.Storage.UpdateGaugeStats(id, newStat)
+		if err != nil {
+			http.Error(w, "can't save stat", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		_, err = fmt.Fprintf(w, "%+v", newStat)
+		if err != nil {
+			return
+		}
+	} else if statsType == "counter" {
+		convertedStatsValue, err := strconv.ParseFloat(statsValue, 64)
+		if err != nil {
+			http.Error(w, error.Error(err), http.StatusBadRequest)
+			return
+		}
+		newStat := types.Stats{
+			Type:  statsType,
+			Value: convertedStatsValue,
+		}
+		err = h.Storage.UpdateCounterStats(id, newStat)
+		if err != nil {
+			http.Error(w, "can't save stat", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		_, err = fmt.Fprintf(w, "%+v", newStat)
+		if err != nil {
+			return
+		}
+	} else {
 		http.Error(w, "Can't save stat", http.StatusNotImplemented)
-		return
-	}
-
-	convertedStatsValue, err := strconv.ParseFloat(statsValue, 64)
-	if err != nil {
-		http.Error(w, error.Error(err), http.StatusBadRequest)
-		return
-	}
-	newStat := types.Stats{
-		Type:  statsType,
-		Value: convertedStatsValue,
-	}
-	err = h.Storage.SaveStats(id, newStat)
-	if err != nil {
-		http.Error(w, "can't save stat", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-	_, err = fmt.Fprintf(w, "%+v", newStat)
-	if err != nil {
 		return
 	}
 }

@@ -37,9 +37,21 @@ func (s *Store) GetStatsByID(ID string) (*types.Stats, error) {
 	return &statsByID, nil
 }
 
-// SaveStats save types.Stats in Storage by ID
-func (s *Store) SaveStats(ID string, stats types.Stats) error {
+// UpdateGaugeStats ...
+func (s *Store) UpdateGaugeStats(ID string, stats types.Stats) error {
 	s.Storage[ID] = stats
+	return nil
+}
+
+func (s *Store) UpdateCounterStats(ID string, stats types.Stats) error {
+	if _, found := s.Storage[ID]; !found {
+		s.Storage[ID] = stats
+	} else {
+		if count, ok := s.Storage[ID]; ok {
+			count.Value += stats.Value
+			s.Storage[ID] = count
+		}
+	}
 	return nil
 }
 

@@ -10,6 +10,7 @@ type (
 	Config struct {
 		Endpoint         string
 		UpdateFrequency  time.Duration
+		ReportFrequency  time.Duration
 		ServerAddress    string
 		ServerPort       string
 		RetryCount       int
@@ -23,7 +24,7 @@ type (
 		FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"test.json"`
 	}
 
-	// Stats struct to save stats
+	// Stats struct to save gauge metric
 	Stats struct {
 		Type  string
 		Value float64
@@ -43,7 +44,8 @@ var (
 	// SenderConfig config for sender service
 	SenderConfig = Config{
 		Endpoint:         "/update/",
-		UpdateFrequency:  10,
+		UpdateFrequency:  2,
+		ReportFrequency:  10,
 		ServerAddress:    "http://127.0.0.1",
 		ServerPort:       "8080",
 		RetryCount:       10,

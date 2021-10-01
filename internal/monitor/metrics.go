@@ -4,165 +4,146 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"math/rand"
 	"runtime"
+	"sync"
 )
 
 // Monitor struct of Statistics
-type Monitor struct{}
+type Monitor struct {
+	Mu sync.Mutex
+	MonitorStorage map[string]types.Stats
+}
 
 // NewMonitor func to create new Monitoring
 func NewMonitor() *Monitor {
-	return &Monitor{}
+	m := make(map[string]types.Stats)
+	m["PollCount"] = types.Stats{
+		Type:  "counter",
+		Value: 0.0,
+	}
+	return &Monitor{MonitorStorage: m}
 }
 
-// Get func generate types.Stats
-func (m *Monitor) Get() ([]types.Metric, error) {
-	var s []types.Metric
+// Update ...
+func (m *Monitor) Update() {
+	//m.Mu.Lock()
+	//defer m.Mu.Unlock()
+
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
-	s = append(s, types.Metric{
-		ID:    "Alloc",
+	m.MonitorStorage["Alloc"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.Alloc),
-	})
-	s = append(s, types.Metric{
-		ID:    "BuckHashSys",
+	}
+	m.MonitorStorage["BuckHashSys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.BuckHashSys),
-	})
-	s = append(s, types.Metric{
-		ID:    "Frees",
+	}
+	m.MonitorStorage["Frees"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.Frees),
-	})
-	s = append(s, types.Metric{
-		ID:    "GCCPUFraction",
+	}
+	m.MonitorStorage["GCCPUFraction"] = types.Stats{
 		Type:  "gauge",
 		Value: rtm.GCCPUFraction,
-	})
-	s = append(s, types.Metric{
-		ID:    "GCSys",
+	}
+	m.MonitorStorage["GCSys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.GCSys),
-	})
-	s = append(s, types.Metric{
-		ID:    "HeapAlloc",
+	}
+	m.MonitorStorage["HeapAlloc"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.HeapAlloc),
-	})
-	s = append(s, types.Metric{
-		ID:    "HeapIdle",
+	}
+	m.MonitorStorage["HeapIdle"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.HeapIdle),
-	})
-	s = append(s, types.Metric{
-		ID:    "HeapInuse",
+	}
+	m.MonitorStorage["HeapInuse"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.HeapInuse),
-	})
-	s = append(s, types.Metric{
-		ID:    "HeapObjects",
+	}
+	m.MonitorStorage["HeapObjects"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.HeapObjects),
-	})
-	s = append(s, types.Metric{
-		ID:    "HeapReleased",
+	}
+	m.MonitorStorage["HeapReleased"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.HeapReleased),
-	})
-	s = append(s, types.Metric{
-		ID:    "HeapSys",
+	}
+	m.MonitorStorage["HeapSys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.HeapSys),
-	})
-	s = append(s, types.Metric{
-		ID:    "LastGC",
+	}
+	m.MonitorStorage["LastGC"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.LastGC),
-	})
-	s = append(s, types.Metric{
-		ID:    "Lookups",
+	}
+	m.MonitorStorage["Lookups"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.Lookups),
-	})
-	s = append(s, types.Metric{
-		ID:    "HeapSys",
+	}
+	m.MonitorStorage["HeapSys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.HeapSys),
-	})
-	s = append(s, types.Metric{
-		ID:    "MCacheInuse",
+	}
+	m.MonitorStorage["MCacheInuse"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.MCacheInuse),
-	})
-	s = append(s, types.Metric{
-		ID:    "MCacheSys",
+	}
+	m.MonitorStorage["MCacheSys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.MCacheSys),
-	})
-	s = append(s, types.Metric{
-		ID:    "MSpanInuse",
+	}
+	m.MonitorStorage["MSpanInuse"] = types.Stats{
 		Type:  "counter",
 		Value: float64(rtm.MSpanInuse),
-	})
-	s = append(s, types.Metric{
-		ID:    "MSpanSys",
+	}
+	m.MonitorStorage["MSpanSys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.MSpanSys),
-	})
-	s = append(s, types.Metric{
-		ID:    "Mallocs",
+	}
+	m.MonitorStorage["Mallocs"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.Mallocs),
-	})
-	s = append(s, types.Metric{
-		ID:    "NextGC",
+	}
+	m.MonitorStorage["NextGC"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.NextGC),
-	})
-	s = append(s, types.Metric{
-		ID:    "NumForcedGC",
+	}
+	m.MonitorStorage["NumForcedGC"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.NumForcedGC),
-	})
-	s = append(s, types.Metric{
-		ID:    "NumGCv",
+	}
+	m.MonitorStorage["NumGCv"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.NumGC),
-	})
-	s = append(s, types.Metric{
-		ID:    "OtherSys",
+	}
+	m.MonitorStorage["OtherSys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.OtherSys),
-	})
-	s = append(s, types.Metric{
-		ID:    "PauseTotalNs",
+	}
+	m.MonitorStorage["PauseTotalNs"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.PauseTotalNs),
-	})
-	s = append(s, types.Metric{
-		ID:    "StackInuse",
+	}
+	m.MonitorStorage["StackInuse"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.StackInuse),
-	})
-	s = append(s, types.Metric{
-		ID:    "StackSys",
+	}
+	m.MonitorStorage["StackSys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.StackSys),
-	})
-	s = append(s, types.Metric{
-		ID:    "Sys",
+	}
+	m.MonitorStorage["Sys"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.Sys),
-	})
-	s = append(s, types.Metric{
-		ID:    "PollCount",
-		Type:  "counter",
-		Value: 1,
-	})
-	s = append(s, types.Metric{
-		ID:    "RandomValue",
+	}
+	m.MonitorStorage["RandomValue"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rand.Intn(10000)),
-	})
-	return s, nil
+	}
+	if count, ok := m.MonitorStorage["PollCount"]; ok {
+		count.Value++
+		m.MonitorStorage["PollCount"] = count
+	}
 }

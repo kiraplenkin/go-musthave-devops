@@ -3,49 +3,37 @@ package sender
 import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/kiraplenkin/go-musthave-devops/internal/monitor"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"net/http"
 )
 
 // SendClient struct of client
 type SendClient struct {
-	resty *resty.Client
+	resty   *resty.Client
+	monitor *monitor.Monitor
 }
 
 // NewSender func to create new client for send types.Stats
-func NewSender(resty *resty.Client) *SendClient {
-	return &SendClient{resty: resty}
+func NewSender(resty *resty.Client, monitor *monitor.Monitor) *SendClient {
+	return &SendClient{resty: resty, monitor: monitor}
 }
 
-//// Send func send data with sender.SendClient
-//func (s *SendClient) Send_2(stat types.Metric, serverAddress, serverPort string) error {
-//	r, err := json.Marshal(stat)
-//	if err != nil {
-//		return err
-//	}
-//	post, err := s.resty.R().
-//		SetHeader("Content-Type", "application/json").
-//		SetBody(bytes.NewBufferString(string(r))).
-//		Post(serverAddress + ":" + serverPort + types.SenderConfig.Endpoint)
-//	if err != nil {
-//		return nil
-//	}
-//	if post.StatusCode() != http.StatusCreated {
-//		return types.ErrCantSaveData
-//	}
-//	return nil
-//}
-
-func (s *SendClient) Send(stat types.Metric, serverAddress, serverPort string) error {
-	r := stat.Type + "/" + stat.ID + "/" + fmt.Sprintf("%f", stat.Value)
-	post, err := s.resty.R().
-		SetHeader("Content-Type", "text/plain").
-		Post(serverAddress + ":" + serverPort + types.SenderConfig.Endpoint + r)
-	if err != nil {
-		return nil
-	}
-	if post.StatusCode() != http.StatusCreated {
-		return types.ErrCantSaveData
+// Send ...
+func (s *SendClient) Send(serverAddress, serverPort string) error {
+	//s.monitor.Mu.Lock()
+	//defer s.monitor.Mu.Unlock()
+	for metric, stat := range s.monitor.MonitorStorage {
+		r := stat.Type + "/" + metric + "/" + fmt.Sprintf("%f", stat.Value)
+		post, err := s.resty.R().
+			SetHeader("Content-Type", "text/plain").
+			Post(serverAddress + ":" + serverPort + types.SenderConfig.Endpoint + r)
+		if err != nil {
+			return nil
+		}
+		if post.StatusCode() != http.StatusCreated {
+			return types.ErrCantSaveData
+		}
 	}
 	return nil
 }
