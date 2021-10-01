@@ -140,7 +140,7 @@ jobs:
       - name: "Code increment #3"
         if: always()
         run: |
-          devopstest -test.v -test.run=^TestIteration3[b]*$
+          devopstest -test.v -test.run=^TestIteration3[b]*$ \
             -source-path=. \
             -binary-path=cmd/server/server
 
