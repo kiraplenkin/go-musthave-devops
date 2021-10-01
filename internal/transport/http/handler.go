@@ -136,10 +136,6 @@ func existMetric(a string, list []string) bool {
 // PostURLStat ...
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	if !existMetric(id, types.Metrics) {
-		http.Error(w, "unknown metric", http.StatusOK)
-		return
-	}
 	statsType := mux.Vars(r)["type"]
 	statsValue := mux.Vars(r)["value"]
 
@@ -153,6 +149,10 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		convertedStatsValue, err := strconv.ParseFloat(statsValue, 64)
 		if err != nil {
 			http.Error(w, error.Error(err), http.StatusBadRequest)
+			return
+		}
+		if !existMetric(id, types.Metrics) {
+			http.Error(w, "unknown metric", http.StatusOK)
 			return
 		}
 		newStat := types.Stats{
@@ -173,6 +173,10 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		convertedStatsValue, err := strconv.ParseFloat(statsValue, 64)
 		if err != nil {
 			http.Error(w, error.Error(err), http.StatusBadRequest)
+			return
+		}
+		if !existMetric(id, types.Metrics) {
+			http.Error(w, "unknown metric", http.StatusOK)
 			return
 		}
 		newStat := types.Stats{
