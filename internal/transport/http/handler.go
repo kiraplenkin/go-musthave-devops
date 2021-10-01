@@ -191,10 +191,10 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	if statsType == "gauge" {
-		if !existMetric(id, types.Metrics) {
-			http.Error(w, "unknown metric", http.StatusOK)
-			return
-		}
+		//if !existMetric(id, types.Metrics) {
+		//	http.Error(w, "unknown metric", http.StatusOK)
+		//	return
+		//}
 		stat, err := h.Storage.GetStatsByID(id)
 		if err != nil {
 			http.Error(w, "can't get stat by this ID", http.StatusNotFound)
