@@ -171,22 +171,13 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}
 	} else {
-		_, err := h.Storage.GetStatsByID(id)
+		err = h.Storage.UpdateCounterStats(id, newStat)
 		if err != nil {
-			err = h.Storage.UpdateCounterStats(id, newStat)
-			if err != nil {
-				http.Error(w, "can't save stat", http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusCreated)
-		} else {
-			err = h.Storage.UpdateCounterStats(id, newStat)
-			if err != nil {
-				http.Error(w, "can't save stat", http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusOK)
+			http.Error(w, "can't save stat", http.StatusInternalServerError)
+			return
 		}
+		w.WriteHeader(http.StatusOK)
+
 	}
 	_, err = fmt.Fprintf(w, "%+v", newStat)
 	if err != nil {
