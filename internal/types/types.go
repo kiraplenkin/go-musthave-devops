@@ -83,7 +83,7 @@ var (
 		"StackInuse",
 		"StackSys",
 		"Sys",
-		"PollCount",
+		//"PollCount",
 		"RandomValue",
 	}
 )
