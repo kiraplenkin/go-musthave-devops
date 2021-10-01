@@ -154,23 +154,40 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		//	http.Error(w, "unknown metric", http.StatusBadRequest)
 		//	return
 		//}
-		err = h.Storage.UpdateGaugeStats(id, newStat)
+		_, err := h.Storage.GetStatsByID(id)
 		if err != nil {
-			http.Error(w, "can't save stat", http.StatusInternalServerError)
-			return
+			err = h.Storage.UpdateGaugeStats(id, newStat)
+			if err != nil {
+				http.Error(w, "can't save stat", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+		} else {
+			err = h.Storage.UpdateGaugeStats(id, newStat)
+			if err != nil {
+				http.Error(w, "can't save stat", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
 		}
-		w.WriteHeader(http.StatusCreated)
-
 	} else {
-		err = h.Storage.UpdateCounterStats(id, newStat)
+		_, err := h.Storage.GetStatsByID(id)
 		if err != nil {
-			http.Error(w, "can't save stat", http.StatusInternalServerError)
-			return
+			err = h.Storage.UpdateCounterStats(id, newStat)
+			if err != nil {
+				http.Error(w, "can't save stat", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+		} else {
+			err = h.Storage.UpdateCounterStats(id, newStat)
+			if err != nil {
+				http.Error(w, "can't save stat", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
 		}
-		w.WriteHeader(http.StatusOK)
-
 	}
-	//w.WriteHeader(http.StatusCreated)
 	_, err = fmt.Fprintf(w, "%+v", newStat)
 	if err != nil {
 		return
