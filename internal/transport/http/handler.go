@@ -124,9 +124,22 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 //	}
 //}
 
+func existMetric(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 // PostURLStat ...
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+	if !existMetric(id, types.Metrics) {
+		http.Error(w, "unknown metric", http.StatusOK)
+		return
+	}
 	statsType := mux.Vars(r)["type"]
 	statsValue := mux.Vars(r)["value"]
 
