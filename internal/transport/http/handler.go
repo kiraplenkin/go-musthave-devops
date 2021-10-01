@@ -134,6 +134,11 @@ func existMetric(a string, list []string) bool {
 
 // PostURLStat ...
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
+	statsType := mux.Vars(r)["type"]
+	if statsType != "gauge" && statsType != "counter" {
+		http.Error(w, "Can't save stat", http.StatusNotImplemented)
+		return
+	}
 	statsValue, err := strconv.ParseFloat(mux.Vars(r)["value"], 64)
 	if err != nil {
 		http.Error(w, error.Error(err), http.StatusBadRequest)
@@ -144,7 +149,6 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown metric", http.StatusOK)
 		return
 	}
-	statsType := mux.Vars(r)["type"]
 
 	newStat := types.Stats{
 		Type:  statsType,
@@ -162,7 +166,7 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-	} else if statsType == "counter" {
+	} else {
 		err = h.Storage.UpdateCounterStats(id, newStat)
 		if err != nil {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
@@ -173,9 +177,6 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-	} else {
-		http.Error(w, "Can't save stat", http.StatusNotImplemented)
-		return
 	}
 }
 
