@@ -50,7 +50,7 @@ func main() {
 		log.Fatal(srv.ListenAndServe())
 	}()
 
-	log.Println("Server Started")
+	//log.Println("Server Started")
 
 	<-done
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

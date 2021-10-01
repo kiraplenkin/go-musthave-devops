@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
-	"github.com/kiraplenkin/go-musthave-devops/internal/validator"
 	"net/http"
 	"strconv"
 )
@@ -135,30 +134,24 @@ func existMetric(a string, list []string) bool {
 
 // PostURLStat ...
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	statsType := mux.Vars(r)["type"]
-	statsValue := mux.Vars(r)["value"]
-
-	err := validator.Require(id, statsType, statsValue)
+	statsValue, err := strconv.ParseFloat(mux.Vars(r)["value"], 64)
 	if err != nil {
 		http.Error(w, error.Error(err), http.StatusBadRequest)
 		return
 	}
+	id := mux.Vars(r)["id"]
+	if !existMetric(id, types.Metrics) {
+		http.Error(w, "unknown metric", http.StatusOK)
+		return
+	}
+	statsType := mux.Vars(r)["type"]
+
+	newStat := types.Stats{
+		Type:  statsType,
+		Value: statsValue,
+	}
 
 	if statsType == "gauge" {
-		convertedStatsValue, err := strconv.ParseFloat(statsValue, 64)
-		if err != nil {
-			http.Error(w, error.Error(err), http.StatusBadRequest)
-			return
-		}
-		if !existMetric(id, types.Metrics) {
-			http.Error(w, "unknown metric", http.StatusOK)
-			return
-		}
-		newStat := types.Stats{
-			Type:  statsType,
-			Value: convertedStatsValue,
-		}
 		err = h.Storage.UpdateGaugeStats(id, newStat)
 		if err != nil {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
@@ -170,19 +163,6 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if statsType == "counter" {
-		convertedStatsValue, err := strconv.ParseFloat(statsValue, 64)
-		if err != nil {
-			http.Error(w, error.Error(err), http.StatusBadRequest)
-			return
-		}
-		if !existMetric(id, types.Metrics) {
-			http.Error(w, "unknown metric", http.StatusOK)
-			return
-		}
-		newStat := types.Stats{
-			Type:  statsType,
-			Value: convertedStatsValue,
-		}
 		err = h.Storage.UpdateCounterStats(id, newStat)
 		if err != nil {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
