@@ -134,7 +134,7 @@ func existMetric(a string, list []string) bool {
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	statsType := mux.Vars(r)["type"]
 	if statsType != "gauge" && statsType != "counter" {
-		http.Error(w, "can't save stat", http.StatusNotImplemented)
+		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
 	}
 	statsValue, err := strconv.ParseFloat(mux.Vars(r)["value"], 64)
@@ -143,10 +143,6 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := mux.Vars(r)["id"]
-	if !existMetric(id, types.Metrics) {
-		http.Error(w, "unknown metric", http.StatusOK)
-		return
-	}
 
 	newStat := types.Stats{
 		Type:  statsType,
@@ -154,6 +150,10 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if statsType == "gauge" {
+		if !existMetric(id, types.Metrics) {
+			http.Error(w, "unknown metric", http.StatusOK)
+			return
+		}
 		err = h.Storage.UpdateGaugeStats(id, newStat)
 		if err != nil {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
@@ -175,34 +175,37 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
 // GetStatsByType ...
 func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 	statsType := mux.Vars(r)["type"]
-	if statsType != "gauge" && statsType != "counter" {
-		http.Error(w, "Can't save stat", http.StatusNotImplemented)
-		return
-	}
-
 	id := mux.Vars(r)["id"]
-	if !existMetric(id, types.Metrics) {
-		http.Error(w, "unknown metric", http.StatusOK)
+
+	if statsType == "gauge" {
+		if !existMetric(id, types.Metrics) {
+			http.Error(w, "unknown metric", http.StatusOK)
+			return
+		}
+		stat, err := h.Storage.GetStatsByID(id)
+		if err != nil {
+			http.Error(w, "can't get stat by this ID", http.StatusBadRequest)
+			return
+		}
+		_, err = fmt.Fprintf(w, "%+v", stat.Value)
+		if err != nil {
+			return
+		}
+	} else if statsType == "counter" {
+		stat, err := h.Storage.GetStatsByID(id)
+		if err != nil {
+			http.Error(w, "can't get stat by this ID", http.StatusBadRequest)
+			return
+		}
+		_, err = fmt.Fprintf(w, "%+v", stat.Value)
+		if err != nil {
+			return
+		}
+	} else {
+		http.Error(w, "can't save stat", http.StatusNotImplemented)
 		return
 	}
-
-	stat, err := h.Storage.GetStatsByID(id)
-	if err != nil {
-		http.Error(w, "can't get stat by this ID", http.StatusBadRequest)
-		return
-	}
-
-	_, err = fmt.Fprintf(w, "%+v", stat.Value)
-	if err != nil {
-		return
-	}
-
-	//if err := json.NewEncoder(w).Encode(stat); err != nil {
-	//	http.Error(w, "unable to marshal the struct", http.StatusOK)
-	//	return
-	//}
 }
