@@ -121,15 +121,6 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 //	}
 //}
 
-func existMetric(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
 // PostURLStat ...
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	statsType := mux.Vars(r)["type"]
@@ -150,26 +141,12 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if statsType == "gauge" {
-		//if !existMetric(id, types.Metrics) {
-		//	http.Error(w, "unknown metric", http.StatusBadRequest)
-		//	return
-		//}
-		_, err := h.Storage.GetStatsByID(id)
+		err = h.Storage.UpdateGaugeStats(id, newStat)
 		if err != nil {
-			err = h.Storage.UpdateGaugeStats(id, newStat)
-			if err != nil {
-				http.Error(w, "can't save stat", http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusOK)
-		} else {
-			err = h.Storage.UpdateGaugeStats(id, newStat)
-			if err != nil {
-				http.Error(w, "can't save stat", http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusOK)
+			http.Error(w, "can't save stat", http.StatusInternalServerError)
+			return
 		}
+		w.WriteHeader(http.StatusOK)
 	} else {
 		err = h.Storage.UpdateCounterStats(id, newStat)
 		if err != nil {
@@ -190,32 +167,42 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 	statsType := mux.Vars(r)["type"]
 	id := mux.Vars(r)["id"]
 
-	if statsType == "gauge" {
-		//if !existMetric(id, types.Metrics) {
-		//	http.Error(w, "unknown metric", http.StatusOK)
-		//	return
-		//}
-		stat, err := h.Storage.GetStatsByID(id)
-		if err != nil {
-			http.Error(w, "can't get stat by this ID", http.StatusNotFound)
-			return
-		}
-		_, err = fmt.Fprintf(w, "%+v", stat.Value)
-		if err != nil {
-			return
-		}
-	} else if statsType == "counter" {
-		stat, err := h.Storage.GetStatsByID(id)
-		if err != nil {
-			http.Error(w, "can't get stat by this ID", http.StatusNotFound)
-			return
-		}
-		_, err = fmt.Fprintf(w, "%+v", stat.Value)
-		if err != nil {
-			return
-		}
-	} else {
-		http.Error(w, "can't save stat", http.StatusNotImplemented)
+	if statsType != "gauge" && statsType != "counter" {
+		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
 	}
+	stat, err := h.Storage.GetStatsByID(id)
+	if err != nil {
+		http.Error(w, "can't get stat by this ID", http.StatusNotFound)
+		return
+	}
+	_, err = fmt.Fprintf(w, "%+v", stat.Value)
+	if err != nil {
+		return
+	}
+
+	//if statsType == "gauge" {
+	//	stat, err := h.Storage.GetStatsByID(id)
+	//	if err != nil {
+	//		http.Error(w, "can't get stat by this ID", http.StatusNotFound)
+	//		return
+	//	}
+	//	_, err = fmt.Fprintf(w, "%+v", stat.Value)
+	//	if err != nil {
+	//		return
+	//	}
+	//} else if statsType == "counter" {
+	//	stat, err := h.Storage.GetStatsByID(id)
+	//	if err != nil {
+	//		http.Error(w, "can't get stat by this ID", http.StatusNotFound)
+	//		return
+	//	}
+	//	_, err = fmt.Fprintf(w, "%+v", stat.Value)
+	//	if err != nil {
+	//		return
+	//	}
+	//} else {
+	//	http.Error(w, "can't save stat", http.StatusNotImplemented)
+	//	return
+	//}
 }
