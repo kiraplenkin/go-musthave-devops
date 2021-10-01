@@ -31,8 +31,6 @@ func (h *Handler) SetupRouters() {
 	//h.Router.HandleFunc("/update", h.PostJsonStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
-
-	h.Router.HandleFunc("/health/", h.CheckHealth).Methods(http.MethodGet)
 }
 
 //GetStatsByID handler that return types.Stats by ID
@@ -136,7 +134,7 @@ func existMetric(a string, list []string) bool {
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	statsType := mux.Vars(r)["type"]
 	if statsType != "gauge" && statsType != "counter" {
-		http.Error(w, "Can't save stat", http.StatusNotImplemented)
+		http.Error(w, "can't save stat", http.StatusNotImplemented)
 		return
 	}
 	statsValue, err := strconv.ParseFloat(mux.Vars(r)["value"], 64)
@@ -177,13 +175,6 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// CheckHealth handler to check health
-func (h Handler) CheckHealth(w http.ResponseWriter, _ *http.Request) {
-	_, err := fmt.Fprintf(w, "alive!")
-	if err != nil {
-		return
-	}
-}
 
 // GetStatsByType ...
 func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
@@ -194,14 +185,24 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := mux.Vars(r)["id"]
-	stat, err := h.Storage.GetStatsByID(id)
-	if err != nil {
-		http.Error(w, "Can't get stat by this ID", http.StatusBadRequest)
+	if !existMetric(id, types.Metrics) {
+		http.Error(w, "unknown metric", http.StatusOK)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(stat); err != nil {
-		http.Error(w, "unable to marshal the struct", http.StatusOK)
+	stat, err := h.Storage.GetStatsByID(id)
+	if err != nil {
+		http.Error(w, "can't get stat by this ID", http.StatusBadRequest)
 		return
 	}
+
+	_, err = fmt.Fprintf(w, "%+v", stat.Value)
+	if err != nil {
+		return
+	}
+
+	//if err := json.NewEncoder(w).Encode(stat); err != nil {
+	//	http.Error(w, "unable to marshal the struct", http.StatusOK)
+	//	return
+	//}
 }
