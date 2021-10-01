@@ -150,15 +150,16 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if statsType == "gauge" {
-		if !existMetric(id, types.Metrics) {
-			http.Error(w, "unknown metric", http.StatusOK)
-			return
-		}
+		//if !existMetric(id, types.Metrics) {
+		//	http.Error(w, "unknown metric", http.StatusBadRequest)
+		//	return
+		//}
 		err = h.Storage.UpdateGaugeStats(id, newStat)
 		if err != nil {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
 			return
 		}
+		w.WriteHeader(http.StatusCreated)
 
 	} else {
 		err = h.Storage.UpdateCounterStats(id, newStat)
@@ -166,9 +167,10 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
 			return
 		}
+		w.WriteHeader(http.StatusOK)
 
 	}
-	w.WriteHeader(http.StatusCreated)
+	//w.WriteHeader(http.StatusCreated)
 	_, err = fmt.Fprintf(w, "%+v", newStat)
 	if err != nil {
 		return
