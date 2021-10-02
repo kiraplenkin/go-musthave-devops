@@ -222,7 +222,7 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
 		}
 		//delta := int64(stat.Value)
-		_, err = fmt.Fprintf(w, "%+v", value)
+		_, err = fmt.Fprintf(w, "%+v", *value)
 		if err != nil {
 			return
 		}
