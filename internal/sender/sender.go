@@ -21,12 +21,12 @@ func NewSender(resty *resty.Client, monitor *monitor.Monitor) *SendClient {
 	return &SendClient{resty: resty, monitor: monitor}
 }
 
-// SendUrl ...
-func (s *SendClient) SendUrl(serverAddress, serverPort string) error {
+// SendURL ...
+func (s *SendClient) SendURL(serverAddress, serverPort string) error {
 	//s.monitor.Mu.Lock()
 	//defer s.monitor.Mu.Unlock()
 	for metric, stat := range s.monitor.MonitorStorage {
-		r := "/" + stat.Type + "/" + metric + "/" + fmt.Sprintf("%f", stat.Value)
+		r := stat.Type + "/" + metric + "/" + fmt.Sprintf("%f", stat.Value)
 		post, err := s.resty.R().
 			SetHeader("Content-Type", "text/plain").
 			Post(serverAddress + ":" + serverPort + types.SenderConfig.Endpoint + r)

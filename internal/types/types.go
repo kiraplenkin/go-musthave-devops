@@ -44,7 +44,7 @@ type (
 var (
 	// SenderConfig config for sender service
 	SenderConfig = Config{
-		Endpoint:         "/update",
+		Endpoint:         "/update/",
 		UpdateFrequency:  2,
 		ReportFrequency:  10,
 		ServerAddress:    "http://127.0.0.1",
