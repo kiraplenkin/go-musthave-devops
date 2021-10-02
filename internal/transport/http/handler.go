@@ -104,7 +104,7 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PostJSONStat handler that save json request to storage.Store
+// PostJSONStat ...
 func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -139,7 +139,7 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 			Type:  statsType,
 			Value: float64(*statsValue),
 		}
-		err = h.Storage.UpdateGaugeStats(id, newStat)
+		err = h.Storage.UpdateCounterStats(id, newStat)
 		if err != nil {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
 			return

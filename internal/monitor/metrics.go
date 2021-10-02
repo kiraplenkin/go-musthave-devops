@@ -99,7 +99,7 @@ func (m *Monitor) Update() {
 		Value: float64(rtm.MCacheSys),
 	}
 	m.MonitorStorage["MSpanInuse"] = types.Stats{
-		Type:  "counter",
+		Type:  "gauge",
 		Value: float64(rtm.MSpanInuse),
 	}
 	m.MonitorStorage["MSpanSys"] = types.Stats{
