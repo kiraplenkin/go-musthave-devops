@@ -9,10 +9,6 @@ type (
 	// Config configs of app
 	Config struct {
 		Endpoint         string
-		UpdateFrequency  time.Duration
-		ReportFrequency  time.Duration
-		ServerAddress    string
-		ServerPort       string
 		RetryCount       int
 		RetryWaitTime    time.Duration
 		RetryMaxWaitTime time.Duration
@@ -20,16 +16,24 @@ type (
 
 	// ServerConfig config for server app
 	ServerConfig struct {
-		ServerAddress   string `env:"SERVER_ADDRESS" envDefault:"localhost"`
+		ServerAddress   string `env:"ADDRESS" envDefault:"localhost:8080"`
 		FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"test.json"`
 	}
 
-	// Stats struct to save gauge metric
+	// AgentConfig ...
+	AgentConfig struct {
+		ServerAddress   string        `env:"ADDRESS" envDefault:"localhost:8080"`
+		UpdateFrequency time.Duration `env:"POLL_INTERVAL" envDefault:"2"`
+		ReportFrequency time.Duration `env:"REPORT_INTERVAL" envDefault:"10"`
+	}
+
+	// Stats ...
 	Stats struct {
 		Type  string
 		Value float64
 	}
 
+	// Metrics ...
 	Metrics struct {
 		ID    string   `json:"id"`              // Имя метрики
 		MType string   `json:"type"`            // Параметр принимающий значение gauge или counter
@@ -48,10 +52,6 @@ var (
 	// SenderConfig config for sender service
 	SenderConfig = Config{
 		Endpoint:         "/update/",
-		UpdateFrequency:  2,
-		ReportFrequency:  10,
-		ServerAddress:    "http://localhost",
-		ServerPort:       "8080",
 		RetryCount:       10,
 		RetryWaitTime:    5,
 		RetryMaxWaitTime: 30,

@@ -29,7 +29,7 @@ func (s *SendClient) SendURL(serverAddress, serverPort string) error {
 		r := stat.Type + "/" + metric + "/" + fmt.Sprintf("%f", stat.Value)
 		post, err := s.resty.R().
 			SetHeader("Content-Type", "text/plain").
-			Post(serverAddress + ":" + serverPort + types.SenderConfig.Endpoint + r)
+			Post(serverAddress + types.SenderConfig.Endpoint + r)
 		if err != nil {
 			return nil
 		}
@@ -41,7 +41,7 @@ func (s *SendClient) SendURL(serverAddress, serverPort string) error {
 }
 
 // Send ...
-func (s *SendClient) Send(serverAddress, serverPort string) error {
+func (s *SendClient) Send(serverAddress string) error {
 	//s.monitor.Mu.Lock()
 	//defer s.monitor.Mu.Unlock()
 	for metric, stat := range s.monitor.MonitorStorage {
@@ -66,7 +66,7 @@ func (s *SendClient) Send(serverAddress, serverPort string) error {
 		post, err := s.resty.R().
 			SetHeader("Content-Type", "application/json").
 			SetBody(bytes.NewBufferString(string(r))).
-			Post(serverAddress + ":" + serverPort + types.SenderConfig.Endpoint)
+			Post(serverAddress + types.SenderConfig.Endpoint)
 		if err != nil {
 			return nil
 		}

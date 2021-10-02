@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
 	monitorService "github.com/kiraplenkin/go-musthave-devops/internal/monitor"
 	sendingService "github.com/kiraplenkin/go-musthave-devops/internal/sender"
@@ -18,6 +19,11 @@ import (
 //)
 
 func main() {
+	agentCfg := types.AgentConfig{}
+	err := env.Parse(&agentCfg)
+	if err != nil {
+		return
+	}
 	//flag.StringVar(&serverAddress, "s", "", "server address")
 	//flag.StringVar(&serverPort, "p", "", "server port")
 	//flag.IntVar(&updateFrequency, "f", 0, "update frequency")
@@ -42,8 +48,8 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
-	pollIntervalTicker := time.NewTicker(types.SenderConfig.UpdateFrequency * time.Second)
-	reportIntervalTicker := time.NewTicker(types.SenderConfig.ReportFrequency * time.Second)
+	pollIntervalTicker := time.NewTicker(agentCfg.UpdateFrequency * time.Second)
+	reportIntervalTicker := time.NewTicker(agentCfg.ReportFrequency * time.Second)
 
 	go func() {
 		for {
@@ -55,7 +61,7 @@ func main() {
 	go func() {
 		for {
 			<-reportIntervalTicker.C
-			err := sender.Send(types.SenderConfig.ServerAddress, types.SenderConfig.ServerPort)
+			err := sender.Send(agentCfg.ServerAddress)
 			if err != nil {
 				fmt.Println(err)
 				return

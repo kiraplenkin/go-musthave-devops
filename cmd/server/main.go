@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
@@ -25,10 +26,8 @@ func main() {
 		return
 	}
 
-	serverPort = "8080"
-
-	//flag.StringVar(&serverPort, "p", "8080", "port to run server")
-	//flag.Parse()
+	flag.StringVar(&serverPort, "p", "8080", "port to run server")
+	flag.Parse()
 
 	store, err := storage.NewStorage(&serverCfg)
 	if err != nil {
@@ -49,8 +48,6 @@ func main() {
 	go func() {
 		log.Fatal(srv.ListenAndServe())
 	}()
-
-	//log.Println("Server Started")
 
 	<-done
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
