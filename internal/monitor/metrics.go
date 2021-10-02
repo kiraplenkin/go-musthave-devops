@@ -114,7 +114,7 @@ func (m *Monitor) Update() {
 		Type:  "gauge",
 		Value: float64(rtm.NumForcedGC),
 	}
-	m.MonitorStorage["NumGCv"] = types.Stats{
+	m.MonitorStorage["NumGC"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.NumGC),
 	}
