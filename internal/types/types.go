@@ -20,7 +20,7 @@ type (
 
 	// ServerConfig config for server app
 	ServerConfig struct {
-		ServerAddress   string `env:"SERVER_ADDRESS" envDefault:"127.0.0.1"`
+		ServerAddress   string `env:"SERVER_ADDRESS" envDefault:"localhost"`
 		FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"test.json"`
 	}
 
@@ -47,7 +47,7 @@ var (
 		Endpoint:         "/update/",
 		UpdateFrequency:  2,
 		ReportFrequency:  10,
-		ServerAddress:    "http://127.0.0.1",
+		ServerAddress:    "http://localhost",
 		ServerPort:       "8080",
 		RetryCount:       10,
 		RetryWaitTime:    5,

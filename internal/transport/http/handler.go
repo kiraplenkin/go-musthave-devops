@@ -70,6 +70,7 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+// GetStatsByTypeJSON ...
 func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
