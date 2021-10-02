@@ -40,12 +40,12 @@ func (s *Store) GetGaugeStatsByID(ID string) (*types.Stats, error) {
 }
 
 // GetCounterStatsByID ...
-func (s *Store) GetCounterStatsByID(ID string) (*int64, error) {
-	statsByID, ok := s.Storage.CounterStorage[ID]
+func (s *Store) GetCounterStatsByID(ID string) (int64, error) {
+	value, ok := s.Storage.CounterStorage[ID]
 	if !ok {
-		return nil, types.ErrCantGetStats
+		return 0, types.ErrCantGetStats
 	}
-	return &statsByID, nil
+	return value, nil
 }
 
 // UpdateGaugeStats ...
@@ -59,10 +59,6 @@ func (s *Store) UpdateCounterStats(ID string, stats types.Stats) error {
 	if _, found := s.Storage.CounterStorage[ID]; !found {
 		s.Storage.CounterStorage[ID] = int64(stats.Value)
 	} else {
-		//if value, ok := s.Storage.CounterStorage[ID]; ok {
-		//	value += int64(stats.Value)
-		//	s.Storage.CounterStorage[ID] = value
-		//}
 		s.Storage.CounterStorage[ID] += int64(stats.Value)
 	}
 	return nil

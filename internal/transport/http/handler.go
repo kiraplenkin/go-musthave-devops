@@ -87,7 +87,7 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
 		}
-		responseStats.Delta = value
+		responseStats.Delta = &value
 	}
 
 	resp, err := json.Marshal(responseStats)
