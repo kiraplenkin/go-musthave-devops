@@ -44,7 +44,7 @@ type (
 var (
 	// SenderConfig config for sender service
 	SenderConfig = Config{
-		Endpoint:         "/update/",
+		Endpoint:         "/update",
 		UpdateFrequency:  2,
 		ReportFrequency:  10,
 		ServerAddress:    "http://127.0.0.1",
@@ -56,4 +56,5 @@ var (
 
 	ErrCantGetStats = errors.New("can't get stats by ID")
 	ErrCantSaveData = errors.New("sent data not saved")
+	ErrUnknownStat = errors.New("unknown stat")
 )
