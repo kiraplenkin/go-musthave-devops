@@ -87,7 +87,6 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
 		}
-		//delta := int64(stat.Value)
 		responseStats.Delta = value
 	}
 
@@ -149,10 +148,6 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
 	}
-	//_, err = fmt.Fprintf(w, "%+v", newStat)
-	//if err != nil {
-	//	return
-	//}
 }
 
 // PostURLStat ...
@@ -221,8 +216,7 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
 		}
-		//delta := int64(stat.Value)
-		_, err = fmt.Fprintf(w, "%+v", *value)
+		_, err = fmt.Fprintf(w, "%+v", value)
 		if err != nil {
 			return
 		}
