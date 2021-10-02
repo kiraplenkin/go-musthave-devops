@@ -39,7 +39,7 @@ type (
 
 	// Storage struct of storage
 	Storage struct {
-		GougeStorage   map[string]Stats
+		GaugeStorage   map[string]Stats
 		CounterStorage map[string]int64
 	}
 )

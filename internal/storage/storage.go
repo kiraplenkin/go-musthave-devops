@@ -15,6 +15,8 @@ type Store struct {
 // NewStorage create new Store
 func NewStorage(cfg *types.ServerConfig) (*Store, error) {
 	statsStorage := &types.Storage{}
+	statsStorage.GaugeStorage = map[string]types.Stats{}
+	statsStorage.CounterStorage = map[string]int64{}
 	_, err := os.Stat(cfg.FileStoragePath)
 	if !os.IsNotExist(err) {
 		err := ReadFromFile(statsStorage, cfg.FileStoragePath)
@@ -30,7 +32,7 @@ func NewStorage(cfg *types.ServerConfig) (*Store, error) {
 
 // GetGaugeStatsByID ...
 func (s *Store) GetGaugeStatsByID(ID string) (*types.Stats, error) {
-	statsByID, ok := s.Storage.GougeStorage[ID]
+	statsByID, ok := s.Storage.GaugeStorage[ID]
 	if !ok {
 		return nil, types.ErrCantGetStats
 	}
@@ -48,7 +50,7 @@ func (s *Store) GetCounterStatsByID(ID string) (*int64, error) {
 
 // UpdateGaugeStats ...
 func (s *Store) UpdateGaugeStats(ID string, stats types.Stats) error {
-	s.Storage.GougeStorage[ID] = stats
+	s.Storage.GaugeStorage[ID] = stats
 	return nil
 }
 
@@ -57,10 +59,11 @@ func (s *Store) UpdateCounterStats(ID string, stats types.Stats) error {
 	if _, found := s.Storage.CounterStorage[ID]; !found {
 		s.Storage.CounterStorage[ID] = int64(stats.Value)
 	} else {
-		if value, ok := s.Storage.CounterStorage[ID]; ok {
-			value += int64(stats.Value)
-			s.Storage.CounterStorage[ID] = value
-		}
+		//if value, ok := s.Storage.CounterStorage[ID]; ok {
+		//	value += int64(stats.Value)
+		//	s.Storage.CounterStorage[ID] = value
+		//}
+		s.Storage.CounterStorage[ID] += int64(stats.Value)
 	}
 	return nil
 }
