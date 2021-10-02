@@ -38,7 +38,10 @@ type (
 	}
 
 	// Storage struct of storage
-	Storage map[string]Stats
+	Storage struct {
+		GougeStorage   map[string]Stats
+		CounterStorage map[string]int64
+	}
 )
 
 var (
@@ -56,5 +59,5 @@ var (
 
 	ErrCantGetStats = errors.New("can't get stats by ID")
 	ErrCantSaveData = errors.New("sent data not saved")
-	ErrUnknownStat = errors.New("unknown stat")
+	ErrUnknownStat  = errors.New("unknown stat")
 )

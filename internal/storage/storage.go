@@ -28,9 +28,18 @@ func NewStorage(cfg *types.ServerConfig) (*Store, error) {
 	}, nil
 }
 
-// GetStatsByID get types.Stats by ID
-func (s *Store) GetStatsByID(ID string) (*types.Stats, error) {
-	statsByID, ok := s.Storage[ID]
+// GetGaugeStatsByID ...
+func (s *Store) GetGaugeStatsByID(ID string) (*types.Stats, error) {
+	statsByID, ok := s.Storage.GougeStorage[ID]
+	if !ok {
+		return nil, types.ErrCantGetStats
+	}
+	return &statsByID, nil
+}
+
+// GetCounterStatsByID ...
+func (s *Store) GetCounterStatsByID(ID string) (*int64, error) {
+	statsByID, ok := s.Storage.CounterStorage[ID]
 	if !ok {
 		return nil, types.ErrCantGetStats
 	}
@@ -39,17 +48,18 @@ func (s *Store) GetStatsByID(ID string) (*types.Stats, error) {
 
 // UpdateGaugeStats ...
 func (s *Store) UpdateGaugeStats(ID string, stats types.Stats) error {
-	s.Storage[ID] = stats
+	s.Storage.GougeStorage[ID] = stats
 	return nil
 }
 
+// UpdateCounterStats ...
 func (s *Store) UpdateCounterStats(ID string, stats types.Stats) error {
-	if _, found := s.Storage[ID]; !found {
-		s.Storage[ID] = stats
+	if _, found := s.Storage.CounterStorage[ID]; !found {
+		s.Storage.CounterStorage[ID] = int64(stats.Value)
 	} else {
-		if count, ok := s.Storage[ID]; ok {
-			count.Value += stats.Value
-			s.Storage[ID] = count
+		if value, ok := s.Storage.CounterStorage[ID]; ok {
+			value += int64(stats.Value)
+			s.Storage.CounterStorage[ID] = value
 		}
 	}
 	return nil

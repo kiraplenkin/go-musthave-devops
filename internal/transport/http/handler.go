@@ -27,33 +27,11 @@ func NewHandler(s storage.Store) *Handler {
 // SetupRouters sets up all the routes for server
 func (h *Handler) SetupRouters() {
 	h.Router = mux.NewRouter()
-	h.Router.HandleFunc("/{id}", h.GetStatsByID).Methods(http.MethodGet)
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/update/", h.PostJSONStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/", h.GetStatsByTypeJSON).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
-}
-
-//GetStatsByID handler that return types.Stats by ID
-func (h *Handler) GetStatsByID(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	stat, err := h.Storage.GetStatsByID(id)
-	if err != nil {
-		http.Error(w, "Can't get stat by this ID", http.StatusBadRequest)
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(stat); err != nil {
-		http.Error(w, "unable to marshal the struct", http.StatusBadRequest)
-		return
-	}
-
-	//_, err = fmt.Fprintf(w, "%+v", stat)
-	//if err != nil {
-	//	http.Error(w, error.Error(err), http.StatusInternalServerError)
-	//}
 }
 
 //GetAllStats handler that return all values from storage.Store
@@ -93,20 +71,24 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stat, err := h.Storage.GetStatsByID(id)
-	if err != nil {
-		http.Error(w, "can't get stat by this ID", http.StatusNotFound)
-		return
-	}
-
 	var responseStats types.Metrics
 	responseStats.ID = id
 	responseStats.MType = statsType
+
 	if statsType == "gauge" {
+		stat, err := h.Storage.GetGaugeStatsByID(id)
+		if err != nil {
+			http.Error(w, "can't get gauge stat by this ID", http.StatusNotFound)
+			return
+		}
 		responseStats.Value = &stat.Value
 	} else {
-		delta := int64(stat.Value)
-		responseStats.Delta = &delta
+		value, err := h.Storage.GetCounterStatsByID(id)
+		if err != nil {
+			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
+		}
+		//delta := int64(stat.Value)
+		responseStats.Delta = value
 	}
 
 	resp, err := json.Marshal(responseStats)
@@ -223,13 +205,26 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
 	}
-	stat, err := h.Storage.GetStatsByID(id)
-	if err != nil {
-		http.Error(w, "can't get stat by this ID", http.StatusNotFound)
-		return
-	}
-	_, err = fmt.Fprintf(w, "%+v", stat.Value)
-	if err != nil {
-		return
+
+	if statsType == "gauge" {
+		stat, err := h.Storage.GetGaugeStatsByID(id)
+		if err != nil {
+			http.Error(w, "can't get gauge stat by this ID", http.StatusNotFound)
+			return
+		}
+		_, err = fmt.Fprintf(w, "%+v", stat.Value)
+		if err != nil {
+			return
+		}
+	} else {
+		value, err := h.Storage.GetCounterStatsByID(id)
+		if err != nil {
+			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
+		}
+		//delta := int64(stat.Value)
+		_, err = fmt.Fprintf(w, "%+v", value)
+		if err != nil {
+			return
+		}
 	}
 }
