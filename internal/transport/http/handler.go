@@ -29,7 +29,8 @@ func (h *Handler) SetupRouters() {
 	h.Router = mux.NewRouter()
 	h.Router.HandleFunc("/{id}", h.GetStatsByID).Methods(http.MethodGet)
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
-	h.Router.HandleFunc("/update", h.PostJsonStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/update", h.PostJSONStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/value", h.GetStatsByTypeJSON).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
 }
@@ -69,15 +70,66 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-//PostJsonStat handler that save json request to storage.Store
-func (h Handler) PostJsonStat(w http.ResponseWriter, r *http.Request) {
+func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "can't read body", http.StatusBadRequest)
 		return
 	}
-	var requestStats types.Metrics
 
+	var requestStats types.Metrics
+	err = json.Unmarshal(body, &requestStats)
+	if err != nil {
+		http.Error(w, "can't decode input json", http.StatusBadRequest)
+		return
+	}
+
+	id := requestStats.ID
+	statsType := requestStats.MType
+
+	if statsType != "gauge" && statsType != "counter" {
+		http.Error(w, "unknown type", http.StatusNotImplemented)
+		return
+	}
+
+	stat, err := h.Storage.GetStatsByID(id)
+	if err != nil {
+		http.Error(w, "can't get stat by this ID", http.StatusNotFound)
+		return
+	}
+
+	var responseStats types.Metrics
+	responseStats.ID = id
+	responseStats.MType = statsType
+	if statsType == "gauge" {
+		responseStats.Value = &stat.Value
+	} else {
+		delta := int64(stat.Value)
+		responseStats.Delta = &delta
+	}
+
+	resp, err := json.Marshal(responseStats)
+	if err != nil {
+		http.Error(w, "can't create JSON response", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(resp)
+	if err != nil {
+		return
+	}
+}
+
+// PostJSONStat handler that save json request to storage.Store
+func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "can't read body", http.StatusBadRequest)
+		return
+	}
+
+	var requestStats types.Metrics
 	err = json.Unmarshal(body, &requestStats)
 	if err != nil {
 		http.Error(w, "can't decode input json", http.StatusBadRequest)
