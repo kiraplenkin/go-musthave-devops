@@ -66,6 +66,10 @@ func (m *Monitor) Update() {
 		Type:  "gauge",
 		Value: float64(rtm.HeapObjects),
 	}
+	m.MonitorStorage["TotalAlloc"] = types.Stats{
+		Type:  "gauge",
+		Value: float64(rtm.TotalAlloc),
+	}
 	m.MonitorStorage["HeapReleased"] = types.Stats{
 		Type:  "gauge",
 		Value: float64(rtm.HeapReleased),
