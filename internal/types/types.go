@@ -22,9 +22,9 @@ type (
 
 	// AgentConfig ...
 	AgentConfig struct {
-		ServerAddress   string        `env:"ADDRESS" envDefault:"localhost:8080"`
-		UpdateFrequency time.Duration `env:"POLL_INTERVAL" envDefault:"2"`
-		ReportFrequency time.Duration `env:"REPORT_INTERVAL" envDefault:"10"`
+		ServerAddress   string `env:"ADDRESS" envDefault:"localhost:8080"`
+		UpdateFrequency string `env:"POLL_INTERVAL" envDefault:"2"`
+		ReportFrequency string `env:"REPORT_INTERVAL" envDefault:"10"`
 	}
 
 	// Stats ...

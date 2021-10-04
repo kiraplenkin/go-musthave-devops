@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
@@ -17,7 +16,7 @@ import (
 	"time"
 )
 
-var serverPort string
+//var serverPort string
 
 func main() {
 	serverCfg := types.ServerConfig{}
@@ -26,8 +25,8 @@ func main() {
 		return
 	}
 
-	flag.StringVar(&serverPort, "p", "8080", "port to run server")
-	flag.Parse()
+	//flag.StringVar(&serverPort, "p", "8080", "port to run server")
+	//flag.Parse()
 
 	store, err := storage.NewStorage(&serverCfg)
 	if err != nil {
@@ -38,7 +37,7 @@ func main() {
 	handler.SetupRouters()
 
 	srv := &http.Server{
-		Addr:    serverCfg.ServerAddress + ":" + serverPort,
+		Addr:    serverCfg.ServerAddress,
 		Handler: handler.Router,
 	}
 

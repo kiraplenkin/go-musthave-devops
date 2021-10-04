@@ -66,7 +66,7 @@ func (s *SendClient) Send(serverAddress string) error {
 		post, err := s.resty.R().
 			SetHeader("Content-Type", "application/json").
 			SetBody(bytes.NewBufferString(string(r))).
-			Post(serverAddress + types.SenderConfig.Endpoint)
+			Post("http://" + serverAddress + types.SenderConfig.Endpoint)
 		if err != nil {
 			return nil
 		}

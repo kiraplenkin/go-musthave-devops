@@ -9,6 +9,7 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -22,6 +23,15 @@ func main() {
 	agentCfg := types.AgentConfig{}
 	err := env.Parse(&agentCfg)
 	if err != nil {
+		return
+	}
+	updateFrequency, err := strconv.Atoi(agentCfg.UpdateFrequency)
+	if err != nil {
+		return
+	}
+	reportFrequency, err := strconv.Atoi(agentCfg.ReportFrequency)
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 	//flag.StringVar(&serverAddress, "s", "", "server address")
@@ -48,9 +58,10 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
-	pollIntervalTicker := time.NewTicker(agentCfg.UpdateFrequency * time.Second)
-	reportIntervalTicker := time.NewTicker(agentCfg.ReportFrequency * time.Second)
+	pollIntervalTicker := time.NewTicker(time.Duration(updateFrequency) * time.Second)
+	reportIntervalTicker := time.NewTicker(time.Duration(reportFrequency) * time.Second)
 
+	// update metrics
 	go func() {
 		for {
 			<-pollIntervalTicker.C
@@ -58,6 +69,7 @@ func main() {
 		}
 	}()
 
+	// report metrics
 	go func() {
 		for {
 			<-reportIntervalTicker.C
