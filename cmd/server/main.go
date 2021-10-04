@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
@@ -12,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -24,6 +24,12 @@ func main() {
 	if err != nil {
 		return
 	}
+	storeInterval, err := strconv.Atoi(serverCfg.StoreInterval)
+	if err != nil {
+		return
+	}
+
+	storeIntervalTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
 
 	//flag.StringVar(&serverPort, "p", "8080", "port to run server")
 	//flag.Parse()
@@ -44,24 +50,29 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
+	// http server
 	go func() {
 		log.Fatal(srv.ListenAndServe())
+	}()
+
+	// save to file
+	go func() {
+		for {
+			<-storeIntervalTicker.C
+			err := store.WriteToFile()
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
 	}()
 
 	<-done
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	func() {
-		data, err := json.Marshal(&store.Storage)
-		if err != nil {
-			log.Fatalf("can't marshal json: %+v", err)
-		}
-		err = storage.SaveToFile(data, serverCfg.FileStoragePath)
-		if err != nil {
-			log.Fatalf("can't save stats to file: %+v", err)
-		}
-
-	}()
+	err = store.WriteToFile()
+	if err != nil {
+		return
+	}
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server Shutdown Failed: %+v", err)

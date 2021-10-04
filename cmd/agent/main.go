@@ -55,6 +55,7 @@ func main() {
 
 	monitor := monitorService.NewMonitor()
 	sender := sendingService.NewSender(restyClient, monitor)
+
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 

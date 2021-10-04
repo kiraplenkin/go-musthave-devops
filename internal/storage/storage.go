@@ -10,23 +10,51 @@ import (
 // Store struct, where types.Stats saved
 type Store struct {
 	Storage types.Storage
+	writer  *bufio.Writer
 }
 
 // NewStorage create new Store
 func NewStorage(cfg *types.ServerConfig) (*Store, error) {
-	statsStorage := &types.Storage{}
-	statsStorage.GaugeStorage = map[string]types.Stats{}
-	statsStorage.CounterStorage = map[string]int64{}
-	_, err := os.Stat(cfg.FileStoragePath)
-	if !os.IsNotExist(err) {
-		err := ReadFromFile(statsStorage, cfg.FileStoragePath)
-		if err != nil {
-			return nil, err
+	statsStorage := &types.Storage{
+		GaugeStorage:   map[string]types.Stats{},
+		CounterStorage: map[string]int64{},
+	}
+	if cfg.Restore {
+		_, err := os.Stat(cfg.FileStoragePath)
+		if !os.IsNotExist(err) {
+			readFile, err := os.OpenFile(cfg.FileStoragePath, os.O_RDONLY, 0644)
+			if err != nil {
+				return nil, err
+			}
+			_, err = readFile.Stat()
+			if err != nil {
+				return nil, err
+			}
+			scanner := bufio.NewScanner(readFile)
+			if !scanner.Scan() {
+				return nil, scanner.Err()
+			}
+
+			data := scanner.Bytes()
+			err = json.Unmarshal(data, &statsStorage)
+			if err != nil {
+				return nil, err
+			}
+
+			err = readFile.Close()
+			if err != nil {
+				return nil, err
+			}
 		}
+	}
+	file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Store{
 		Storage: *statsStorage,
+		writer:  bufio.NewWriter(file),
 	}, nil
 }
 
@@ -69,63 +97,19 @@ func (s *Store) GetAllStats() (*types.Storage, error) {
 	return &s.Storage, nil
 }
 
-// SaveToFile func to save types.Storage to file before shutdown server
-func SaveToFile(data []byte, fileName string) error {
-	writeFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+// WriteToFile ...
+func (s *Store) WriteToFile() error {
+	data, err := json.Marshal(&s.Storage)
 	if err != nil {
 		return err
 	}
-	defer func(writeFile *os.File) {
-		err := writeFile.Close()
-		if err != nil {
-			return
-		}
-	}(writeFile)
-
-	writer := bufio.NewWriter(writeFile)
-
-	_, err = writer.Write(data)
+	_, err = s.writer.Write(data)
 	if err != nil {
 		return err
 	}
-
-	err = writer.WriteByte('\n')
+	err = s.writer.WriteByte('\n')
 	if err != nil {
 		return err
 	}
-	return writer.Flush()
-}
-
-// ReadFromFile func to read stats if exist types.ServerConfig to types.Storage
-func ReadFromFile(storage *types.Storage, fileName string) error {
-	readFile, err := os.OpenFile(fileName, os.O_RDONLY, 0644)
-	if err != nil {
-		return err
-	}
-
-	_, err = readFile.Stat()
-	if err != nil {
-		return err
-	}
-
-	scanner := bufio.NewScanner(readFile)
-	if !scanner.Scan() {
-		return scanner.Err()
-	}
-
-	data := scanner.Bytes()
-	err = json.Unmarshal(data, storage)
-	if err != nil {
-		return err
-	}
-
-	err = readFile.Close()
-	if err != nil {
-		return err
-	}
-	err = os.Remove(fileName)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.writer.Flush()
 }

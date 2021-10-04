@@ -17,7 +17,9 @@ type (
 	// ServerConfig config for server app
 	ServerConfig struct {
 		ServerAddress   string `env:"ADDRESS" envDefault:"localhost:8080"`
-		FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"test.json"`
+		FileStoragePath string `env:"STORE_FILE" envDefault:"test.json"`
+		StoreInterval string `env:"STORE_INTERVAL" envDefault:"300"`
+		Restore bool `env:"RESTORE" envDefault:"true"`
 	}
 
 	// AgentConfig ...
