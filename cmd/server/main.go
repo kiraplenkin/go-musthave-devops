@@ -73,7 +73,6 @@ func main() {
 	if err != nil {
 		return
 	}
-
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server Shutdown Failed: %+v", err)
 	}
