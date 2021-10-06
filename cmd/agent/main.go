@@ -22,8 +22,8 @@ func main() {
 	}
 
 	flag.StringVar(&agentCfg.ServerAddress, "a", agentCfg.ServerAddress, "server address")
-	flag.StringVar(&agentCfg.ReportFrequency, "r", agentCfg.ReportFrequency, "report interval")
 	flag.StringVar(&agentCfg.UpdateFrequency, "p", agentCfg.UpdateFrequency, "poll interval")
+	flag.StringVar(&agentCfg.ReportFrequency, "r", agentCfg.ReportFrequency, "report interval")
 	flag.StringVar(&agentCfg.Key, "k", "", "key for hash")
 	flag.Parse()
 
@@ -48,8 +48,8 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
-	pollIntervalTicker := time.NewTicker(updateFrequency * time.Second)
-	reportIntervalTicker := time.NewTicker(reportFrequency * time.Second)
+	pollIntervalTicker := time.NewTicker(updateFrequency)
+	reportIntervalTicker := time.NewTicker(reportFrequency)
 
 	// update metrics
 	go func() {

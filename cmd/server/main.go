@@ -38,7 +38,7 @@ func main() {
 		return
 	}
 
-	storeIntervalTicker := time.NewTicker(storeInterval * time.Second)
+	storeIntervalTicker := time.NewTicker(storeInterval)
 
 	store, err := storage.NewStorage(&serverCfg)
 	if err != nil {
