@@ -17,12 +17,11 @@ type (
 	// Config for server and agent apps
 	Config struct {
 		ServerAddress   string `env:"ADDRESS" envDefault:"localhost:8080"`
-		ServerPort      string `env:"SERVER_PORT" envDefault:"8080"`
 		FileStoragePath string `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
-		StoreInterval   string `env:"STORE_INTERVAL" envDefault:"300"`
+		StoreInterval   string `env:"STORE_INTERVAL" envDefault:"5m"`
 		Restore         bool   `env:"RESTORE" envDefault:"true"`
-		UpdateFrequency string `env:"POLL_INTERVAL" envDefault:"2"`
-		ReportFrequency string `env:"REPORT_INTERVAL" envDefault:"10"`
+		UpdateFrequency string `env:"POLL_INTERVAL" envDefault:"2s"`
+		ReportFrequency string `env:"REPORT_INTERVAL" envDefault:"10s"`
 		Key             string `env:"KEY"`
 	}
 

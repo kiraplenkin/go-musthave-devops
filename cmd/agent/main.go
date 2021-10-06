@@ -10,7 +10,6 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 )
@@ -21,21 +20,22 @@ func main() {
 	if err != nil {
 		return
 	}
-	updateFrequency, err := strconv.Atoi(agentCfg.UpdateFrequency)
-	if err != nil {
-		return
-	}
-	reportFrequency, err := strconv.Atoi(agentCfg.ReportFrequency)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 
 	flag.StringVar(&agentCfg.ServerAddress, "a", agentCfg.ServerAddress, "server address")
 	flag.StringVar(&agentCfg.ReportFrequency, "r", agentCfg.ReportFrequency, "report interval")
 	flag.StringVar(&agentCfg.UpdateFrequency, "p", agentCfg.UpdateFrequency, "poll interval")
 	flag.StringVar(&agentCfg.Key, "k", "", "key for hash")
 	flag.Parse()
+
+	updateFrequency, err := time.ParseDuration(agentCfg.UpdateFrequency)
+	if err != nil {
+		return
+	}
+	reportFrequency, err := time.ParseDuration(agentCfg.ReportFrequency)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	restyClient := resty.New().
 		SetRetryCount(types.SenderConfig.RetryCount).
@@ -48,8 +48,8 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
-	pollIntervalTicker := time.NewTicker(time.Duration(updateFrequency) * time.Second)
-	reportIntervalTicker := time.NewTicker(time.Duration(reportFrequency) * time.Second)
+	pollIntervalTicker := time.NewTicker(updateFrequency * time.Second)
+	reportIntervalTicker := time.NewTicker(reportFrequency * time.Second)
 
 	// update metrics
 	go func() {

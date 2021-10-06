@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 )
@@ -22,10 +21,7 @@ func main() {
 	serverCfg := types.Config{}
 	err := env.Parse(&serverCfg)
 	if err != nil {
-		return
-	}
-	storeInterval, err := strconv.Atoi(serverCfg.StoreInterval)
-	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
@@ -36,7 +32,13 @@ func main() {
 	flag.StringVar(&serverCfg.Key, "k", "", "key for hash")
 	flag.Parse()
 
-	storeIntervalTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
+	storeInterval, err := time.ParseDuration(serverCfg.StoreInterval)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	storeIntervalTicker := time.NewTicker(storeInterval * time.Second)
 
 	store, err := storage.NewStorage(&serverCfg)
 	if err != nil {
@@ -47,7 +49,7 @@ func main() {
 	handler.SetupRouters()
 
 	srv := &http.Server{
-		Addr:    serverCfg.ServerAddress + ":" + serverCfg.ServerPort,
+		Addr:    serverCfg.ServerAddress,
 		Handler: transformation.GzipHandle(handler.Router),
 	}
 
