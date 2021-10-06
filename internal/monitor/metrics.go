@@ -25,8 +25,8 @@ func NewMonitor() *Monitor {
 
 // Update ...
 func (m *Monitor) Update() {
-	//m.Mu.Lock()
-	//defer m.Mu.Unlock()
+	m.Mu.Lock()
+	defer m.Mu.Unlock()
 
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)

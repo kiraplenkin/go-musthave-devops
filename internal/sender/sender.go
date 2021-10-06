@@ -44,8 +44,8 @@ func (s *SendClient) SendURL(agentConfig types.Config) error {
 
 // Send ...
 func (s *SendClient) Send(agentConfig types.Config) error {
-	//s.monitor.Mu.Lock()
-	//defer s.monitor.Mu.Unlock()
+	s.monitor.Mu.Lock()
+	defer s.monitor.Mu.Unlock()
 	for id, stat := range s.monitor.MonitorStorage {
 		if stat.Type != "gauge" && stat.Type != "counter" {
 			return types.ErrUnknownStat
