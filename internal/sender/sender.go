@@ -78,7 +78,7 @@ func (s *SendClient) Send(agentConfig types.Config) error {
 		post, err := s.resty.R().
 			SetHeader("Content-Type", "application/json").
 			SetBody(bytes.NewBufferString(string(rawRequest))).
-			Post("http://" + agentConfig.ServerAddress + types.SenderConfig.Endpoint)
+			Post("http://" + agentConfig.ServerAddress + ":" + agentConfig.ServerPort + types.SenderConfig.Endpoint)
 		if err != nil {
 			return nil
 		}

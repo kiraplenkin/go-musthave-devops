@@ -47,7 +47,7 @@ func main() {
 	handler.SetupRouters()
 
 	srv := &http.Server{
-		Addr:    serverCfg.ServerAddress,
+		Addr:    serverCfg.ServerAddress + ":" + serverCfg.ServerPort,
 		Handler: transformation.GzipHandle(handler.Router),
 	}
 

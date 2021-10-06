@@ -17,6 +17,7 @@ type (
 	// Config for server and agent apps
 	Config struct {
 		ServerAddress   string `env:"ADDRESS" envDefault:"localhost:8080"`
+		ServerPort      string `env:"SERVER_PORT" envDefault:"8080"`
 		FileStoragePath string `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
 		StoreInterval   string `env:"STORE_INTERVAL" envDefault:"300"`
 		Restore         bool   `env:"RESTORE" envDefault:"true"`
