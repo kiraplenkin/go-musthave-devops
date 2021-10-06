@@ -6,25 +6,20 @@ import (
 )
 
 type (
-	// Config configs of app
-	Config struct {
+	// AgentConfig configs of app
+	AgentConfig struct {
 		Endpoint         string
 		RetryCount       int
 		RetryWaitTime    time.Duration
 		RetryMaxWaitTime time.Duration
 	}
 
-	// ServerConfig config for server app
-	ServerConfig struct {
+	// Config for server and agent apps
+	Config struct {
 		ServerAddress   string `env:"ADDRESS" envDefault:"localhost:8080"`
 		FileStoragePath string `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
-		StoreInterval string `env:"STORE_INTERVAL" envDefault:"300"`
-		Restore bool `env:"RESTORE" envDefault:"true"`
-	}
-
-	// AgentConfig ...
-	AgentConfig struct {
-		ServerAddress   string `env:"ADDRESS" envDefault:"localhost:8080"`
+		StoreInterval   string `env:"STORE_INTERVAL" envDefault:"300"`
+		Restore         bool   `env:"RESTORE" envDefault:"true"`
 		UpdateFrequency string `env:"POLL_INTERVAL" envDefault:"2"`
 		ReportFrequency string `env:"REPORT_INTERVAL" envDefault:"10"`
 	}
@@ -52,7 +47,7 @@ type (
 
 var (
 	// SenderConfig config for sender service
-	SenderConfig = Config{
+	SenderConfig = AgentConfig{
 		Endpoint:         "/update/",
 		RetryCount:       10,
 		RetryWaitTime:    5,

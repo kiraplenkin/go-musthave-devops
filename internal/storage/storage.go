@@ -14,7 +14,7 @@ type Store struct {
 }
 
 // NewStorage create new Store
-func NewStorage(cfg *types.ServerConfig) (*Store, error) {
+func NewStorage(cfg *types.Config) (*Store, error) {
 	statsStorage := &types.Storage{
 		GaugeStorage:   map[string]types.Stats{},
 		CounterStorage: map[string]int64{},

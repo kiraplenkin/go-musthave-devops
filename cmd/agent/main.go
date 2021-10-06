@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
@@ -14,13 +15,8 @@ import (
 	"time"
 )
 
-//var (
-//	updateFrequency           int
-//	serverAddress, serverPort string
-//)
-
 func main() {
-	agentCfg := types.AgentConfig{}
+	agentCfg := types.Config{}
 	err := env.Parse(&agentCfg)
 	if err != nil {
 		return
@@ -34,19 +30,11 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	//flag.StringVar(&serverAddress, "s", "", "server address")
-	//flag.StringVar(&serverPort, "p", "", "server port")
-	//flag.IntVar(&updateFrequency, "f", 0, "update frequency")
-	//flag.Parse()
-	//if updateFrequency != 0 {
-	//	types.SenderConfig.UpdateFrequency = time.Duration(updateFrequency)
-	//}
-	//if serverAddress != "" {
-	//	types.SenderConfig.ServerAddress = serverAddress
-	//}
-	//if serverPort != "" {
-	//	types.SenderConfig.ServerPort = serverPort
-	//}
+
+	flag.StringVar(&agentCfg.ServerAddress, "a", agentCfg.ServerAddress, "server address")
+	flag.StringVar(&agentCfg.ReportFrequency, "r", agentCfg.ReportFrequency, "report interval")
+	flag.StringVar(&agentCfg.UpdateFrequency, "p", agentCfg.UpdateFrequency, "poll interval")
+	flag.Parse()
 
 	restyClient := resty.New().
 		SetRetryCount(types.SenderConfig.RetryCount).

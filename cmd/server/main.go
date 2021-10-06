@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
@@ -16,10 +17,8 @@ import (
 	"time"
 )
 
-//var serverPort string
-
 func main() {
-	serverCfg := types.ServerConfig{}
+	serverCfg := types.Config{}
 	err := env.Parse(&serverCfg)
 	if err != nil {
 		return
@@ -29,10 +28,13 @@ func main() {
 		return
 	}
 
-	storeIntervalTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
+	flag.StringVar(&serverCfg.ServerAddress, "a", serverCfg.ServerAddress, "server address")
+	flag.BoolVar(&serverCfg.Restore, "r", serverCfg.Restore, "restore storage")
+	flag.StringVar(&serverCfg.StoreInterval, "i", serverCfg.StoreInterval, "store interval")
+	flag.StringVar(&serverCfg.FileStoragePath, "f", serverCfg.FileStoragePath, "file storage")
+	flag.Parse()
 
-	//flag.StringVar(&serverPort, "p", "8080", "port to run server")
-	//flag.Parse()
+	storeIntervalTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
 
 	store, err := storage.NewStorage(&serverCfg)
 	if err != nil {
