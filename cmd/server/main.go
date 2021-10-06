@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
+	"github.com/kiraplenkin/go-musthave-devops/internal/transformation"
 	transportHTTP "github.com/kiraplenkin/go-musthave-devops/internal/transport/http"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"log"
@@ -46,7 +47,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    serverCfg.ServerAddress,
-		Handler: handler.Router,
+		Handler: transformation.GzipHandle(handler.Router),
 	}
 
 	done := make(chan os.Signal, 1)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/kiraplenkin/go-musthave-devops/internal/monitor"
+	"github.com/kiraplenkin/go-musthave-devops/internal/transformation"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"net/http"
 )
@@ -58,14 +59,20 @@ func (s *SendClient) Send(serverAddress string) error {
 			value := int64(stat.Value)
 			requestStat.Delta = &value
 		}
-		r, err := json.Marshal(requestStat)
+		rawRequest, err := json.Marshal(requestStat)
+		if err != nil {
+			return err
+		}
+
+		compressRequest, err := transformation.Compress(rawRequest)
 		if err != nil {
 			return err
 		}
 
 		post, err := s.resty.R().
 			SetHeader("Content-Type", "application/json").
-			SetBody(bytes.NewBufferString(string(r))).
+			SetHeader("Content-Encoding", "gzip").
+			SetBody(bytes.NewBufferString(string(compressRequest))).
 			Post("http://" + serverAddress + types.SenderConfig.Endpoint)
 		if err != nil {
 			return nil

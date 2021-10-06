@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
+	"github.com/kiraplenkin/go-musthave-devops/internal/transformation"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"io/ioutil"
 	"net/http"
@@ -111,8 +112,14 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	decompressBody, err := transformation.Decompress(body)
+	if err != nil {
+		http.Error(w, "can't decompress body", http.StatusInternalServerError)
+		return
+	}
+
 	var requestStats types.Metrics
-	err = json.Unmarshal(body, &requestStats)
+	err = json.Unmarshal(decompressBody, &requestStats)
 	if err != nil {
 		http.Error(w, "can't decode input json", http.StatusBadRequest)
 		return
