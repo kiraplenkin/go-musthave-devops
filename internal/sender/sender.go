@@ -2,6 +2,8 @@ package sender
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
@@ -41,38 +43,42 @@ func (s *SendClient) SendURL(serverAddress, serverPort string) error {
 }
 
 // Send ...
-func (s *SendClient) Send(serverAddress string) error {
+func (s *SendClient) Send(agentConfig types.Config) error {
 	//s.monitor.Mu.Lock()
 	//defer s.monitor.Mu.Unlock()
-	for metric, stat := range s.monitor.MonitorStorage {
+	for id, stat := range s.monitor.MonitorStorage {
 		if stat.Type != "gauge" && stat.Type != "counter" {
 			return types.ErrUnknownStat
 		}
 
 		requestStat := types.Metrics{}
-		requestStat.ID = metric
+		requestStat.ID = id
 		requestStat.MType = stat.Type
 		if stat.Type == "gauge" {
 			requestStat.Value = &stat.Value
+			if agentConfig.Key != "" {
+				h := hmac.New(sha256.New, []byte(agentConfig.Key))
+				h.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, stat.Value)))
+				requestStat.Hash = string(h.Sum(nil))
+			}
 		} else {
 			value := int64(stat.Value)
 			requestStat.Delta = &value
+			if agentConfig.Key != "" {
+				h := hmac.New(sha256.New, []byte(agentConfig.Key))
+				h.Write([]byte(fmt.Sprintf("%s:counter:%d", id, value)))
+				requestStat.Hash = string(h.Sum(nil))
+			}
 		}
 		rawRequest, err := json.Marshal(requestStat)
 		if err != nil {
 			return err
 		}
 
-		//compressRequest, err := transformation.Compress(rawRequest)
-		//if err != nil {
-		//	return err
-		//}
-
 		post, err := s.resty.R().
 			SetHeader("Content-Type", "application/json").
-			//SetHeader("Content-Encoding", "gzip").
 			SetBody(bytes.NewBufferString(string(rawRequest))).
-			Post("http://" + serverAddress + types.SenderConfig.Endpoint)
+			Post("http://" + agentConfig.ServerAddress + types.SenderConfig.Endpoint)
 		if err != nil {
 			return nil
 		}

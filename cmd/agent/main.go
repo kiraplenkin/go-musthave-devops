@@ -34,6 +34,7 @@ func main() {
 	flag.StringVar(&agentCfg.ServerAddress, "a", agentCfg.ServerAddress, "server address")
 	flag.StringVar(&agentCfg.ReportFrequency, "r", agentCfg.ReportFrequency, "report interval")
 	flag.StringVar(&agentCfg.UpdateFrequency, "p", agentCfg.UpdateFrequency, "poll interval")
+	flag.StringVar(&agentCfg.Key, "k", "", "key for hash")
 	flag.Parse()
 
 	restyClient := resty.New().
@@ -62,7 +63,7 @@ func main() {
 	go func() {
 		for {
 			<-reportIntervalTicker.C
-			err := sender.Send(agentCfg.ServerAddress)
+			err := sender.Send(agentCfg)
 			if err != nil {
 				fmt.Println(err)
 				return

@@ -22,6 +22,7 @@ type (
 		Restore         bool   `env:"RESTORE" envDefault:"true"`
 		UpdateFrequency string `env:"POLL_INTERVAL" envDefault:"2"`
 		ReportFrequency string `env:"REPORT_INTERVAL" envDefault:"10"`
+		Key             string `env:"KEY"`
 	}
 
 	// Stats ...
@@ -36,6 +37,7 @@ type (
 		MType string   `json:"type"`            // Параметр принимающий значение gauge или counter
 		Delta *int64   `json:"delta,omitempty"` // Значение метрики в случае передачи counter
 		Value *float64 `json:"value,omitempty"` // Значение метрики в случае передачи gauge
+		Hash  string   `json:"hash,omitempty"`  // Значение hash-функции
 	}
 
 	// Storage struct of storage

@@ -103,6 +103,39 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetStatsByType ...
+func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
+	statsType := mux.Vars(r)["type"]
+	id := mux.Vars(r)["id"]
+
+	if statsType != "gauge" && statsType != "counter" {
+		http.Error(w, "unknown type", http.StatusNotImplemented)
+		return
+	}
+
+	if statsType == "gauge" {
+		stat, err := h.Storage.GetGaugeStatsByID(id)
+		if err != nil {
+			http.Error(w, "can't get gauge stat by this ID", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("content-type", "text/html")
+		_, err = fmt.Fprintf(w, "%+v", stat.Value)
+		if err != nil {
+			return
+		}
+	} else {
+		value, err := h.Storage.GetCounterStatsByID(id)
+		if err != nil {
+			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
+		}
+		_, err = fmt.Fprintf(w, "%+v", value)
+		if err != nil {
+			return
+		}
+	}
+}
+
 // PostJSONStat ...
 func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
@@ -110,12 +143,6 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "can't read body", http.StatusBadRequest)
 		return
 	}
-
-	//decompressBody, err := transformation.Decompress(body)
-	//if err != nil {
-	//	http.Error(w, "can't decompress body", http.StatusInternalServerError)
-	//	return
-	//}
 
 	var requestStats types.Metrics
 	err = json.Unmarshal(body, &requestStats)
@@ -194,37 +221,5 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	_, err = fmt.Fprintf(w, "%+v", newStat)
 	if err != nil {
 		return
-	}
-}
-
-// GetStatsByType ...
-func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
-	statsType := mux.Vars(r)["type"]
-	id := mux.Vars(r)["id"]
-
-	if statsType != "gauge" && statsType != "counter" {
-		http.Error(w, "unknown type", http.StatusNotImplemented)
-		return
-	}
-
-	if statsType == "gauge" {
-		stat, err := h.Storage.GetGaugeStatsByID(id)
-		if err != nil {
-			http.Error(w, "can't get gauge stat by this ID", http.StatusNotFound)
-			return
-		}
-		_, err = fmt.Fprintf(w, "%+v", stat.Value)
-		if err != nil {
-			return
-		}
-	} else {
-		value, err := h.Storage.GetCounterStatsByID(id)
-		if err != nil {
-			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
-		}
-		_, err = fmt.Fprintf(w, "%+v", value)
-		if err != nil {
-			return
-		}
 	}
 }

@@ -33,6 +33,7 @@ func main() {
 	flag.BoolVar(&serverCfg.Restore, "r", serverCfg.Restore, "restore storage")
 	flag.StringVar(&serverCfg.StoreInterval, "i", serverCfg.StoreInterval, "store interval")
 	flag.StringVar(&serverCfg.FileStoragePath, "f", serverCfg.FileStoragePath, "file storage")
+	flag.StringVar(&serverCfg.Key, "k", "", "key for hash")
 	flag.Parse()
 
 	storeIntervalTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
