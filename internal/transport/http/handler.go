@@ -198,7 +198,7 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
+		//w.WriteHeader(http.StatusOK)
 	case "counter":
 		statsValue := requestStats.Delta
 		// todo create func
@@ -230,7 +230,7 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
+		//w.WriteHeader(http.StatusOK)
 	default:
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
