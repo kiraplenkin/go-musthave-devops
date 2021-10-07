@@ -209,7 +209,7 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusOK)
 	case "counter":
-		statsValue, err := strconv.ParseInt(mux.Vars(r)["value"], 64, 10)
+		statsValue, err := strconv.ParseInt(mux.Vars(r)["value"], 10, 64)
 		if err != nil {
 			http.Error(w, error.Error(err), http.StatusBadRequest)
 			return
