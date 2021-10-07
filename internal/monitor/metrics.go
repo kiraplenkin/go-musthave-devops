@@ -15,11 +15,6 @@ type Monitor struct {
 
 // NewMonitor func to create new Monitoring
 func NewMonitor() *Monitor {
-	//m := make(map[string]types.Stats)
-	//m["PollCount"] = types.Stats{
-	//	Type:  "counter",
-	//	Value: 0.0,
-	//}
 	return &Monitor{MonitorStorage: make(map[string]types.Stats)}
 }
 
