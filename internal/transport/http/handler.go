@@ -85,7 +85,8 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 		if h.Cfg.Key != "" {
 			hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
 			hash.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, stat.Value)))
-			responseStats.Hash = string(hash.Sum(nil))
+			dst := hash.Sum(nil)
+			responseStats.Hash = fmt.Sprintf("%x", dst)
 		}
 	case "counter":
 		value, err := h.Storage.GetCounterStatsByID(id)
@@ -93,9 +94,12 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
 		}
 		responseStats.Delta = &value
-		hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
-		hash.Write([]byte(fmt.Sprintf("%s:counter:%d", id, value)))
-		responseStats.Hash = string(hash.Sum(nil))
+		if h.Cfg.Key != "" {
+			hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
+			hash.Write([]byte(fmt.Sprintf("%s:counter:%d", id, value)))
+			dst := hash.Sum(nil)
+			responseStats.Hash = fmt.Sprintf("%x", dst)
+		}
 	default:
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
