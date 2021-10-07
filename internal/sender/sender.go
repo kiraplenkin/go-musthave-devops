@@ -47,21 +47,18 @@ func (s *SendClient) Send(agentConfig types.Config) error {
 	s.monitor.Mu.Lock()
 	defer s.monitor.Mu.Unlock()
 	for id, stat := range s.monitor.MonitorStorage {
-		if stat.Type != "gauge" && stat.Type != "counter" {
-			return types.ErrUnknownStat
-		}
-
 		requestStat := types.Metrics{}
 		requestStat.ID = id
 		requestStat.MType = stat.Type
-		if stat.Type == "gauge" {
+		switch stat.Type {
+		case "gauge":
 			requestStat.Value = &stat.Value
 			if agentConfig.Key != "" {
 				h := hmac.New(sha256.New, []byte(agentConfig.Key))
 				h.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, stat.Value)))
 				requestStat.Hash = string(h.Sum(nil))
 			}
-		} else {
+		case "counter":
 			value := int64(stat.Value)
 			requestStat.Delta = &value
 			if agentConfig.Key != "" {
@@ -69,7 +66,10 @@ func (s *SendClient) Send(agentConfig types.Config) error {
 				h.Write([]byte(fmt.Sprintf("%s:counter:%d", id, value)))
 				requestStat.Hash = string(h.Sum(nil))
 			}
+		default:
+			return types.ErrUnknownStat
 		}
+
 		rawRequest, err := json.Marshal(requestStat)
 		if err != nil {
 			return err

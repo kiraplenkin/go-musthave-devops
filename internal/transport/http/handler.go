@@ -1,6 +1,8 @@
 package http
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -68,28 +70,35 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 	id := requestStats.ID
 	statsType := requestStats.MType
 
-	if statsType != "gauge" && statsType != "counter" {
-		http.Error(w, "unknown type", http.StatusNotImplemented)
-		return
-	}
-
 	var responseStats types.Metrics
 	responseStats.ID = id
 	responseStats.MType = statsType
 
-	if statsType == "gauge" {
+	switch statsType {
+	case "gauge":
 		stat, err := h.Storage.GetGaugeStatsByID(id)
 		if err != nil {
 			http.Error(w, "can't get gauge stat by this ID", http.StatusNotFound)
 			return
 		}
 		responseStats.Value = &stat.Value
-	} else {
+		if h.Cfg.Key != "" {
+			hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
+			hash.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, stat.Value)))
+			responseStats.Hash = string(hash.Sum(nil))
+		}
+	case "counter":
 		value, err := h.Storage.GetCounterStatsByID(id)
 		if err != nil {
 			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
 		}
 		responseStats.Delta = &value
+		hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
+		hash.Write([]byte(fmt.Sprintf("%s:counter:%d", id, value)))
+		responseStats.Hash = string(hash.Sum(nil))
+	default:
+		http.Error(w, "unknown type", http.StatusNotImplemented)
+		return
 	}
 
 	resp, err := json.Marshal(responseStats)
@@ -109,13 +118,8 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 	statsType := mux.Vars(r)["type"]
 	id := mux.Vars(r)["id"]
-
-	if statsType != "gauge" && statsType != "counter" {
-		http.Error(w, "unknown type", http.StatusNotImplemented)
-		return
-	}
-
-	if statsType == "gauge" {
+	switch statsType {
+	case "gauge":
 		stat, err := h.Storage.GetGaugeStatsByID(id)
 		if err != nil {
 			http.Error(w, "can't get gauge stat by this ID", http.StatusNotFound)
@@ -126,7 +130,7 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-	} else {
+	case "counter":
 		value, err := h.Storage.GetCounterStatsByID(id)
 		if err != nil {
 			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
@@ -135,6 +139,9 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
+	default:
+		http.Error(w, "unknown type", http.StatusNotImplemented)
+		return
 	}
 }
 
@@ -159,6 +166,25 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 	switch statsType {
 	case "gauge":
 		statsValue := requestStats.Value
+		// todo create func
+		if h.Cfg.Key != "" {
+			hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
+			hash.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, *statsValue)))
+			if hmac.Equal([]byte(requestStats.Hash), hash.Sum(nil)) {
+				newStat := types.Stats{
+					Type:  statsType,
+					Value: *statsValue,
+				}
+				err = h.Storage.UpdateGaugeStats(id, newStat)
+				if err != nil {
+					http.Error(w, "can't save stat", http.StatusInternalServerError)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+			} else {
+				http.Error(w, "hash doesn't equal", http.StatusBadRequest)
+			}
+		}
 		newStat := types.Stats{
 			Type:  statsType,
 			Value: *statsValue,
@@ -171,6 +197,26 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	case "counter":
 		statsValue := requestStats.Delta
+		// todo create func
+		if h.Cfg.Key != "" {
+			hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
+			hash.Write([]byte(fmt.Sprintf("%s:counter:%d", id, *statsValue)))
+			if hmac.Equal([]byte(requestStats.Hash), hash.Sum(nil)) {
+				newStat := types.Stats{
+					Type:  statsType,
+					Value: float64(*statsValue),
+				}
+				err = h.Storage.UpdateGaugeStats(id, newStat)
+				if err != nil {
+					http.Error(w, "can't save stat", http.StatusInternalServerError)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+			} else {
+				http.Error(w, "hash doesn't equal", http.StatusBadRequest)
+				return
+			}
+		}
 		newStat := types.Stats{
 			Type:  statsType,
 			Value: float64(*statsValue),
@@ -229,8 +275,4 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
 	}
-	//_, err = fmt.Fprintf(w, "%+v", newStat)
-	//if err != nil {
-	//	return
-	//}
 }
