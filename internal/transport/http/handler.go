@@ -174,7 +174,7 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 		if h.Cfg.Key != "" {
 			hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
 			hash.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, *statsValue)))
-			if hmac.Equal([]byte(requestStats.Hash), hash.Sum(nil)) {
+			if hmac.Equal([]byte(requestStats.Hash), []byte(fmt.Sprintf("%x", hash.Sum(nil)))) {
 				newStat := types.Stats{
 					Type:  statsType,
 					Value: *statsValue,
@@ -205,7 +205,7 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 		if h.Cfg.Key != "" {
 			hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
 			hash.Write([]byte(fmt.Sprintf("%s:counter:%d", id, *statsValue)))
-			if hmac.Equal([]byte(requestStats.Hash), hash.Sum(nil)) {
+			if hmac.Equal([]byte(requestStats.Hash), []byte(fmt.Sprintf("%x", hash.Sum(nil)))) {
 				newStat := types.Stats{
 					Type:  statsType,
 					Value: float64(*statsValue),
