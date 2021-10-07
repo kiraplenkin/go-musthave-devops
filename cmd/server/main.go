@@ -45,7 +45,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	handler := transportHTTP.NewHandler(*store)
+	handler := transportHTTP.NewHandler(*store, serverCfg)
 	handler.SetupRouters()
 
 	srv := &http.Server{

@@ -15,12 +15,14 @@ import (
 type Handler struct {
 	Router  *mux.Router
 	Storage *storage.Store
+	Cfg     *types.Config
 }
 
 // NewHandler returns a pointer to Handler
-func NewHandler(s storage.Store) *Handler {
+func NewHandler(s storage.Store, cfg types.Config) *Handler {
 	return &Handler{
 		Storage: &s,
+		Cfg:     &cfg,
 	}
 }
 
@@ -153,7 +155,9 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 
 	id := requestStats.ID
 	statsType := requestStats.MType
-	if statsType == "gauge" {
+
+	switch statsType {
+	case "gauge":
 		statsValue := requestStats.Value
 		newStat := types.Stats{
 			Type:  statsType,
@@ -165,7 +169,7 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-	} else if statsType == "counter" {
+	case "counter":
 		statsValue := requestStats.Delta
 		newStat := types.Stats{
 			Type:  statsType,
@@ -177,7 +181,7 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-	} else {
+	default:
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
 	}
@@ -186,40 +190,47 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 // PostURLStat ...
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	statsType := mux.Vars(r)["type"]
-	if statsType != "gauge" && statsType != "counter" {
-		http.Error(w, "unknown type", http.StatusNotImplemented)
-		return
-	}
-	statsValue, err := strconv.ParseFloat(mux.Vars(r)["value"], 64)
-	if err != nil {
-		http.Error(w, error.Error(err), http.StatusBadRequest)
-		return
-	}
-	id := mux.Vars(r)["id"]
-
-	newStat := types.Stats{
-		Type:  statsType,
-		Value: statsValue,
-	}
-
-	if statsType == "gauge" {
+	switch statsType {
+	case "gauge":
+		statsValue, err := strconv.ParseFloat(mux.Vars(r)["value"], 64)
+		if err != nil {
+			http.Error(w, error.Error(err), http.StatusBadRequest)
+			return
+		}
+		id := mux.Vars(r)["id"]
+		newStat := types.Stats{
+			Type:  statsType,
+			Value: statsValue,
+		}
 		err = h.Storage.UpdateGaugeStats(id, newStat)
 		if err != nil {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-	} else {
+	case "counter":
+		statsValue, err := strconv.ParseInt(mux.Vars(r)["value"], 64, 10)
+		if err != nil {
+			http.Error(w, error.Error(err), http.StatusBadRequest)
+			return
+		}
+		id := mux.Vars(r)["id"]
+		newStat := types.Stats{
+			Type:  statsType,
+			Value: float64(statsValue),
+		}
 		err = h.Storage.UpdateCounterStats(id, newStat)
 		if err != nil {
 			http.Error(w, "can't save stat", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-
-	}
-	_, err = fmt.Fprintf(w, "%+v", newStat)
-	if err != nil {
+	default:
+		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
 	}
+	//_, err = fmt.Fprintf(w, "%+v", newStat)
+	//if err != nil {
+	//	return
+	//}
 }
