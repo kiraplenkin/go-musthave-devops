@@ -9,18 +9,18 @@ import (
 
 // Monitor struct of Statistics
 type Monitor struct {
-	Mu sync.Mutex
+	Mu             sync.Mutex
 	MonitorStorage map[string]types.Stats
 }
 
 // NewMonitor func to create new Monitoring
 func NewMonitor() *Monitor {
-	m := make(map[string]types.Stats)
-	m["PollCount"] = types.Stats{
-		Type:  "counter",
-		Value: 0.0,
-	}
-	return &Monitor{MonitorStorage: m}
+	//m := make(map[string]types.Stats)
+	//m["PollCount"] = types.Stats{
+	//	Type:  "counter",
+	//	Value: 0.0,
+	//}
+	return &Monitor{MonitorStorage: make(map[string]types.Stats)}
 }
 
 // Update ...
@@ -149,5 +149,10 @@ func (m *Monitor) Update() {
 	if count, ok := m.MonitorStorage["PollCount"]; ok {
 		count.Value++
 		m.MonitorStorage["PollCount"] = count
+	} else {
+		m.MonitorStorage["PollCount"] = types.Stats{
+			Type:  "counter",
+			Value: 1.0,
+		}
 	}
 }

@@ -56,8 +56,7 @@ func (s *SendClient) Send(agentConfig types.Config) error {
 			if agentConfig.Key != "" {
 				h := hmac.New(sha256.New, []byte(agentConfig.Key))
 				h.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, stat.Value)))
-				dst := h.Sum(nil)
-				requestStat.Hash = fmt.Sprintf("%x", dst)
+				requestStat.Hash = fmt.Sprintf("%x", h.Sum(nil))
 			}
 		case "counter":
 			value := int64(stat.Value)
@@ -65,8 +64,7 @@ func (s *SendClient) Send(agentConfig types.Config) error {
 			if agentConfig.Key != "" {
 				h := hmac.New(sha256.New, []byte(agentConfig.Key))
 				h.Write([]byte(fmt.Sprintf("%s:counter:%d", id, value)))
-				dst := h.Sum(nil)
-				requestStat.Hash = fmt.Sprintf("%x", dst)
+				requestStat.Hash = fmt.Sprintf("%x", h.Sum(nil))
 			}
 		default:
 			return types.ErrUnknownStat
