@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
@@ -56,7 +57,8 @@ func (s *SendClient) Send(agentConfig types.Config) error {
 			if agentConfig.Key != "" {
 				h := hmac.New(sha256.New, []byte(agentConfig.Key))
 				h.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, stat.Value)))
-				requestStat.Hash = string(h.Sum(nil))
+				requestStat.Hash = base64.StdEncoding.EncodeToString(h.Sum(nil))
+				//requestStat.Hash = string(h.Sum(nil))
 			}
 		case "counter":
 			value := int64(stat.Value)
@@ -64,7 +66,8 @@ func (s *SendClient) Send(agentConfig types.Config) error {
 			if agentConfig.Key != "" {
 				h := hmac.New(sha256.New, []byte(agentConfig.Key))
 				h.Write([]byte(fmt.Sprintf("%s:counter:%d", id, value)))
-				requestStat.Hash = string(h.Sum(nil))
+				requestStat.Hash = base64.StdEncoding.EncodeToString(h.Sum(nil))
+				//requestStat.Hash = string(h.Sum(nil))
 			}
 		default:
 			return types.ErrUnknownStat
