@@ -55,6 +55,7 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 	}
 
 	return &Store{
+		Mu:      sync.Mutex{},
 		Storage: *statsStorage,
 		writer:  bufio.NewWriter(file),
 	}, nil
