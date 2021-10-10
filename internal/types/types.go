@@ -43,7 +43,7 @@ type (
 
 	// Storage struct of storage
 	Storage struct {
-		Mu             *sync.Mutex
+		Mu             sync.Mutex
 		GaugeStorage   map[string]Stats
 		CounterStorage map[string]int64
 	}
