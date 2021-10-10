@@ -4,24 +4,23 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"math/rand"
 	"runtime"
-	"sync"
 )
 
 // Monitor struct of Statistics
 type Monitor struct {
 	MonitorStorage map[string]types.Stats
-	Mu             *sync.Mutex
+	//Mu             *sync.Mutex
 }
 
 // NewMonitor func to create new Monitoring
 func NewMonitor() *Monitor {
-	return &Monitor{MonitorStorage: make(map[string]types.Stats), Mu: &sync.Mutex{}}
+	return &Monitor{MonitorStorage: make(map[string]types.Stats)}
 }
 
 // Update ...
 func (m *Monitor) Update() {
-	m.Mu.Lock()
-	defer m.Mu.Unlock()
+	//m.Mu.Lock()
+	//defer m.Mu.Unlock()
 
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
