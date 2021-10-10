@@ -16,6 +16,7 @@ import (
 type SendClient struct {
 	resty   *resty.Client
 	monitor *monitor.Monitor
+	//mu      *sync.Mutex
 }
 
 // NewSender func to create new client for send types.Stats
@@ -25,6 +26,9 @@ func NewSender(resty *resty.Client, monitor *monitor.Monitor) *SendClient {
 
 // SendURL ...
 func (s *SendClient) SendURL(agentConfig types.Config) error {
+	s.monitor.Mu.Lock()
+	defer s.monitor.Mu.Unlock()
+
 	for metric, stat := range s.monitor.MonitorStorage {
 		r := stat.Type + "/" + metric + "/" + fmt.Sprintf("%f", stat.Value)
 		post, err := s.resty.R().
