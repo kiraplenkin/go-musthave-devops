@@ -9,13 +9,13 @@ import (
 
 // Monitor struct of Statistics
 type Monitor struct {
-	Mu             sync.Mutex
 	MonitorStorage map[string]types.Stats
+	Mu             *sync.Mutex
 }
 
 // NewMonitor func to create new Monitoring
 func NewMonitor() *Monitor {
-	return &Monitor{MonitorStorage: make(map[string]types.Stats)}
+	return &Monitor{MonitorStorage: make(map[string]types.Stats), Mu: &sync.Mutex{}}
 }
 
 // Update ...
