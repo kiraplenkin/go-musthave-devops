@@ -10,25 +10,21 @@ import (
 	"github.com/kiraplenkin/go-musthave-devops/internal/monitor"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"net/http"
-	"sync"
 )
 
 // SendClient struct of client
 type SendClient struct {
 	resty   *resty.Client
 	monitor *monitor.Monitor
-	mu      *sync.Mutex
 }
 
 // NewSender func to create new client for send types.Stats
 func NewSender(resty *resty.Client, monitor *monitor.Monitor) *SendClient {
-	return &SendClient{resty: resty, monitor: monitor, mu: &sync.Mutex{}}
+	return &SendClient{resty: resty, monitor: monitor}
 }
 
 // SendURL ...
 func (s *SendClient) SendURL(agentConfig types.Config) error {
-	//s.monitor.Mu.Lock()
-	//defer s.monitor.Mu.Unlock()
 	for metric, stat := range s.monitor.MonitorStorage {
 		r := stat.Type + "/" + metric + "/" + fmt.Sprintf("%f", stat.Value)
 		post, err := s.resty.R().
@@ -46,9 +42,6 @@ func (s *SendClient) SendURL(agentConfig types.Config) error {
 
 // Send ...
 func (s *SendClient) Send(agentConfig types.Config) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	for id, stat := range s.monitor.MonitorStorage {
 		requestStat := types.Metrics{}
 		requestStat.ID = id
