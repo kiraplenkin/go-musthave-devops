@@ -42,6 +42,9 @@ func (s *SendClient) SendURL(agentConfig types.Config) error {
 
 // Send ...
 func (s *SendClient) Send(agentConfig types.Config) error {
+	s.monitor.Mu.Lock()
+	defer s.monitor.Mu.Unlock()
+
 	for id, stat := range s.monitor.MonitorStorage {
 		requestStat := types.Metrics{}
 		requestStat.ID = id
@@ -74,7 +77,7 @@ func (s *SendClient) Send(agentConfig types.Config) error {
 		post, err := s.resty.R().
 			SetHeader("Content-Type", "application/json").
 			SetBody(bytes.NewBufferString(string(rawRequest))).
-			Post("https://" + agentConfig.ServerAddress + types.SenderConfig.Endpoint)
+			Post("http://" + agentConfig.ServerAddress + types.SenderConfig.Endpoint)
 		if err != nil {
 			return nil
 		}
