@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"os"
-	"sync"
 )
 
 // Store struct, where types.Stats saved
 type Store struct {
 	Storage types.Storage
 	writer  *bufio.Writer
-	Mu      *sync.Mutex
 }
 
 // NewStorage create new Store
@@ -57,14 +55,14 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 	return &Store{
 		Storage: *statsStorage,
 		writer:  bufio.NewWriter(file),
-		Mu:      &sync.Mutex{},
 	}, nil
 }
 
 // GetGaugeStatsByID ...
 func (s *Store) GetGaugeStatsByID(ID string) (*types.Stats, error) {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	//s.Mu.Lock()
+	//defer s.Mu.Unlock()
+
 	statsByID, ok := s.Storage.GaugeStorage[ID]
 	if !ok {
 		return nil, types.ErrCantGetStats
@@ -74,8 +72,8 @@ func (s *Store) GetGaugeStatsByID(ID string) (*types.Stats, error) {
 
 // GetCounterStatsByID ...
 func (s *Store) GetCounterStatsByID(ID string) (int64, error) {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	//s.Mu.Lock()
+	//defer s.Mu.Unlock()
 
 	value, ok := s.Storage.CounterStorage[ID]
 	if !ok {
@@ -86,8 +84,8 @@ func (s *Store) GetCounterStatsByID(ID string) (int64, error) {
 
 // UpdateGaugeStats ...
 func (s *Store) UpdateGaugeStats(ID string, stats types.Stats) error {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	//s.Mu.Lock()
+	//defer s.Mu.Unlock()
 
 	s.Storage.GaugeStorage[ID] = stats
 	return nil
@@ -95,8 +93,8 @@ func (s *Store) UpdateGaugeStats(ID string, stats types.Stats) error {
 
 // UpdateCounterStats ...
 func (s *Store) UpdateCounterStats(ID string, stats types.Stats) error {
-	s.Mu.Lock()
-	s.Mu.Unlock()
+	//s.Mu.Lock()
+	//s.Mu.Unlock()
 
 	if _, found := s.Storage.CounterStorage[ID]; !found {
 		s.Storage.CounterStorage[ID] = int64(stats.Value)
