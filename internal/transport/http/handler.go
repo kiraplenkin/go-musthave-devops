@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 // Handler stores pointers to service
@@ -18,6 +19,7 @@ type Handler struct {
 	Router  *mux.Router
 	Storage *storage.Store
 	Cfg     *types.Config
+	Mu      *sync.Mutex
 }
 
 // NewHandler returns a pointer to Handler
@@ -25,6 +27,7 @@ func NewHandler(s storage.Store, cfg types.Config) *Handler {
 	return &Handler{
 		Storage: &s,
 		Cfg:     &cfg,
+		Mu:      &sync.Mutex{},
 	}
 }
 
@@ -54,6 +57,9 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 
 // GetStatsByTypeJSON ...
 func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "can't read body", http.StatusBadRequest)
@@ -120,6 +126,9 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 
 // GetStatsByType ...
 func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
 	statsType := mux.Vars(r)["type"]
 	id := mux.Vars(r)["id"]
 	switch statsType {
@@ -151,6 +160,9 @@ func (h Handler) GetStatsByType(w http.ResponseWriter, r *http.Request) {
 
 // PostJSONStat ...
 func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "can't read body", http.StatusBadRequest)
@@ -239,6 +251,9 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 
 // PostURLStat ...
 func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
 	statsType := mux.Vars(r)["type"]
 	switch statsType {
 	case "gauge":
