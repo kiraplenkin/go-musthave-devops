@@ -6,22 +6,18 @@ import (
 	"runtime"
 )
 
-// Monitor struct of Statistics
+// Monitor struct of storage for types.Stats
 type Monitor struct {
 	MonitorStorage map[string]types.Stats
-	//Mu             *sync.Mutex
 }
 
-// NewMonitor func to create new Monitoring
+// NewMonitor func to create new Monitoring storage
 func NewMonitor() *Monitor {
 	return &Monitor{MonitorStorage: make(map[string]types.Stats)}
 }
 
-// Update ...
+// Update generate new types.Stats
 func (m *Monitor) Update() {
-	//m.Mu.Lock()
-	//defer m.Mu.Unlock()
-
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 	m.MonitorStorage["Alloc"] = types.Stats{
