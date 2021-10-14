@@ -52,6 +52,7 @@ func (h Handler) GetAllStats(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
+	w.Header().Set("content-type", "text/html")
 	_, err = fmt.Fprintf(w, "%v", *allStats)
 	if err != nil {
 		return
