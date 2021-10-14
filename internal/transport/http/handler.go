@@ -102,6 +102,7 @@ func (h Handler) GetStatsByTypeJSON(w http.ResponseWriter, r *http.Request) {
 		value, err := h.Storage.GetCounterStatsByID(id)
 		if err != nil {
 			http.Error(w, "can't get counter value by this ID", http.StatusNotFound)
+			return
 		}
 		responseStats.Delta = &value
 		if h.Cfg.Key != "" {
