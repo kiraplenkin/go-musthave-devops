@@ -59,6 +59,7 @@ func main() {
 
 	// http server
 	go func() {
+		log.Println("Server started")
 		log.Fatal(srv.ListenAndServe())
 	}()
 
