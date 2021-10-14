@@ -3,11 +3,13 @@ package http
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -39,6 +41,7 @@ func (h *Handler) SetupRouters() {
 	h.Router.HandleFunc("/value/", h.GetStatsByTypeJSON).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
+	h.Router.HandleFunc("/ping", h.PingDatabase).Methods(http.MethodGet)
 }
 
 //GetAllStats handler that return all values from storage.Store
@@ -299,4 +302,20 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
 	}
+}
+
+// PingDatabase check connection to Database
+func (h Handler) PingDatabase(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open("postgres", h.Cfg.Database)
+	if err != nil {
+		http.Error(w, "can't connect to db", http.StatusInternalServerError)
+		return
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			return
+		}
+	}(db)
+	w.WriteHeader(http.StatusOK)
 }

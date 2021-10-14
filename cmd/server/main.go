@@ -31,6 +31,7 @@ func main() {
 	flag.StringVar(&serverCfg.StoreInterval, "i", serverCfg.StoreInterval, "store interval")
 	flag.StringVar(&serverCfg.FileStoragePath, "f", serverCfg.FileStoragePath, "file storage")
 	flag.StringVar(&serverCfg.Key, "k", "", "key for hash")
+	flag.StringVar(&serverCfg.Database, "d", serverCfg.Database, "database connection string")
 	flag.Parse()
 
 	storeInterval, err := time.ParseDuration(serverCfg.StoreInterval)
