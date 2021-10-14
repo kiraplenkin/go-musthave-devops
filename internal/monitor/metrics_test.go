@@ -9,20 +9,8 @@ import (
 
 // TestNewMonitor test for creating Monitor
 func TestNewMonitor(t *testing.T) {
-	tests := []struct {
-		name string
-		want *Monitor
-	}{
-		{
-			name: "Creating new monitor storage",
-			want: NewMonitor(),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, NewMonitor())
-		})
-	}
+	monitor := NewMonitor()
+	assert.IsType(t, &Monitor{}, monitor)
 }
 
 // TestUpdateMonitor test for generating types.Stats

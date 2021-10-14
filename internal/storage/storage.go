@@ -7,13 +7,13 @@ import (
 	"os"
 )
 
-// Store struct, where types.Stats saved
+// Store struct, where types.Storage saved
 type Store struct {
 	Storage types.Storage
 	writer  *bufio.Writer
 }
 
-// NewStorage create new Store
+// NewStorage create new Store with types.Storage and writer
 func NewStorage(cfg *types.Config) (*Store, error) {
 	statsStorage := &types.Storage{
 		GaugeStorage:   map[string]types.Stats{},
@@ -58,11 +58,8 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 	}, nil
 }
 
-// GetGaugeStatsByID ...
+// GetGaugeStatsByID return gauge metric from GaugeStorage by ID
 func (s *Store) GetGaugeStatsByID(ID string) (*types.Stats, error) {
-	//s.Mu.Lock()
-	//defer s.Mu.Unlock()
-
 	statsByID, ok := s.Storage.GaugeStorage[ID]
 	if !ok {
 		return nil, types.ErrCantGetStats
@@ -70,11 +67,8 @@ func (s *Store) GetGaugeStatsByID(ID string) (*types.Stats, error) {
 	return &statsByID, nil
 }
 
-// GetCounterStatsByID ...
+// GetCounterStatsByID return counter metric from CounterStorage by ID
 func (s *Store) GetCounterStatsByID(ID string) (int64, error) {
-	//s.Mu.Lock()
-	//defer s.Mu.Unlock()
-
 	value, ok := s.Storage.CounterStorage[ID]
 	if !ok {
 		return 0, types.ErrCantGetStats
@@ -82,20 +76,14 @@ func (s *Store) GetCounterStatsByID(ID string) (int64, error) {
 	return value, nil
 }
 
-// UpdateGaugeStats ...
+// UpdateGaugeStats replace GaugeStorage by ID
 func (s *Store) UpdateGaugeStats(ID string, stats types.Stats) error {
-	//s.Mu.Lock()
-	//defer s.Mu.Unlock()
-
 	s.Storage.GaugeStorage[ID] = stats
 	return nil
 }
 
-// UpdateCounterStats ...
+// UpdateCounterStats increase CounterStorage by ID if exist or create new
 func (s *Store) UpdateCounterStats(ID string, stats types.Stats) error {
-	//s.Mu.Lock()
-	//s.Mu.Unlock()
-
 	if _, found := s.Storage.CounterStorage[ID]; !found {
 		s.Storage.CounterStorage[ID] = int64(stats.Value)
 	} else {
@@ -104,19 +92,13 @@ func (s *Store) UpdateCounterStats(ID string, stats types.Stats) error {
 	return nil
 }
 
-// GetAllStats return all types.Stats of Storage
+// GetAllStats return all types.Stats from types.Storage
 func (s *Store) GetAllStats() (*types.Storage, error) {
-	//s.Mu.Lock()
-	//defer s.Mu.Unlock()
-
 	return &s.Storage, nil
 }
 
-// WriteToFile ...
+// WriteToFile save types.Storage to file
 func (s *Store) WriteToFile() error {
-	//s.Mu.Lock()
-	//defer s.Mu.Unlock()
-
 	data, err := json.Marshal(&s.Storage)
 	if err != nil {
 		return err
