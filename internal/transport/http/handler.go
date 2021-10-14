@@ -35,7 +35,7 @@ func NewHandler(s storage.Store, cfg types.Config) *Handler {
 func (h *Handler) SetupRouters() {
 	h.Router = mux.NewRouter()
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
-	h.Router.HandleFunc("/update/", h.PostJSONStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/updatre/", h.PostJSONStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/", h.GetStatsByTypeJSON).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
