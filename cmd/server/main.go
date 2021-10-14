@@ -20,18 +20,18 @@ import (
 func main() {
 	serverCfg := types.Config{}
 
+	err := env.Parse(&serverCfg)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	flag.StringVar(&serverCfg.ServerAddress, "a", serverCfg.ServerAddress, "server address")
 	flag.BoolVar(&serverCfg.Restore, "r", serverCfg.Restore, "restore storage")
 	flag.StringVar(&serverCfg.StoreInterval, "i", serverCfg.StoreInterval, "store interval")
 	flag.StringVar(&serverCfg.FileStoragePath, "f", serverCfg.FileStoragePath, "file storage")
 	flag.StringVar(&serverCfg.Key, "k", "", "key for hash")
 	flag.Parse()
-
-	err := env.Parse(&serverCfg)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 
 	storeInterval, err := time.ParseDuration(serverCfg.StoreInterval)
 	if err != nil {
