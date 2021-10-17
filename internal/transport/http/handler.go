@@ -304,7 +304,8 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 
 // PingDatabase check connection to Database
 func (h Handler) PingDatabase(w http.ResponseWriter, r *http.Request) {
-	err := h.Storage.Ping()
+	//err := h.Storage.Ping()
+	_, err := h.Storage.GetAllStats()
 	if err != nil {
 		http.Error(w, "can't connect to database", http.StatusInternalServerError)
 		return

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bufio"
-	"database/sql"
 	"encoding/json"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	_ "github.com/lib/pq"
@@ -13,7 +12,7 @@ import (
 type Store struct {
 	Storage types.Storage
 	writer  *bufio.Writer
-	db      *sql.DB
+	//db      *sql.DB
 }
 
 // NewStorage create new Store with types.Storage and writer
@@ -22,17 +21,6 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 		GaugeStorage:   map[string]types.Stats{},
 		CounterStorage: map[string]int64{},
 	}
-
-	file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		return nil, err
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			return
-		}
-	}(file)
 	if cfg.Restore {
 		_, err := os.Stat(cfg.FileStoragePath)
 		if !os.IsNotExist(err) {
@@ -61,22 +49,14 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 			}
 		}
 	}
-
-	db, err := sql.Open("postgres", cfg.Database)
+	file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err
 	}
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			return
-		}
-	}(db)
 
 	return &Store{
 		Storage: *statsStorage,
 		writer:  bufio.NewWriter(file),
-		db:      db,
 	}, nil
 }
 
@@ -137,10 +117,10 @@ func (s *Store) WriteToFile() error {
 }
 
 // Ping server
-func (s *Store) Ping() error {
-	err := s.db.Ping()
-	if err != nil {
-		return err
-	}
-	return nil
-}
+//func (s *Store) Ping() error {
+//	err := s.db.Ping()
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
