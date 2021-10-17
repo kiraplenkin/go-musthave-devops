@@ -3,13 +3,11 @@ package http
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
-	_ "github.com/lib/pq"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -306,23 +304,10 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 
 // PingDatabase check connection to Database
 func (h Handler) PingDatabase(w http.ResponseWriter, r *http.Request) {
-	db, err := sql.Open("postgres", h.Cfg.Database)
+	err := h.Storage.Ping()
 	if err != nil {
-		http.Error(w, "can't connect to db", http.StatusInternalServerError)
+		http.Error(w, "can't connect to database", http.StatusInternalServerError)
 		return
 	}
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			return
-		}
-	}(db)
-
-	err = db.Ping()
-	if err != nil {
-		http.Error(w, "can't connect to db", http.StatusInternalServerError)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 }

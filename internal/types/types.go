@@ -23,7 +23,7 @@ type (
 		UpdateFrequency string `env:"POLL_INTERVAL" envDefault:"2s"`
 		ReportFrequency string `env:"REPORT_INTERVAL" envDefault:"10s"`
 		Key             string `env:"KEY"`
-		Database        string `env:"DATABASE_DSN" envDefault:"localhost:5432"`
+		Database        string `env:"DATABASE_DSN"`
 	}
 
 	// Stats ...
