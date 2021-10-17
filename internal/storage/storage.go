@@ -123,7 +123,7 @@ func (s *Store) WriteToFile() error {
 	return s.writer.Flush()
 }
 
-Ping server
+// Ping server
 func (s *Store) Ping() error {
 	err := s.db.Ping()
 	if err != nil {
