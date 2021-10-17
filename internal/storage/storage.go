@@ -60,11 +60,21 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 		return nil, err
 	}
 
-	return &Store{
-		Storage: *statsStorage,
-		writer:  bufio.NewWriter(file),
-		db:      db,
-	}, nil
+	if cfg.Database != "" {
+		return &Store{
+			Storage: *statsStorage,
+			writer:  nil,
+			db:      db,
+		}, nil
+	} else {
+		return &Store{
+			Storage: *statsStorage,
+			writer:  bufio.NewWriter(file),
+			db:      nil,
+		}, nil
+	}
+
+
 }
 
 // GetGaugeStatsByID return gauge metric from GaugeStorage by ID
