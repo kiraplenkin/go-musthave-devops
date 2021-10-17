@@ -23,70 +23,61 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 		CounterStorage: map[string]int64{},
 	}
 
-	switch cfg.Database {
-	case "":
-		file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-		if err != nil {
-			return nil, err
-		}
-		defer func(file *os.File) {
-			err := file.Close()
-			if err != nil {
-				return
-			}
-		}(file)
-		if cfg.Restore {
-			_, err := os.Stat(cfg.FileStoragePath)
-			if !os.IsNotExist(err) {
-				readFile, err := os.OpenFile(cfg.FileStoragePath, os.O_RDONLY, 0644)
-				if err != nil {
-					return nil, err
-				}
-				_, err = readFile.Stat()
-				if err != nil {
-					return nil, err
-				}
-				scanner := bufio.NewScanner(readFile)
-				if !scanner.Scan() {
-					return nil, scanner.Err()
-				}
-
-				data := scanner.Bytes()
-				err = json.Unmarshal(data, &statsStorage)
-				if err != nil {
-					return nil, err
-				}
-
-				err = readFile.Close()
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-
-		return &Store{
-			Storage: *statsStorage,
-			writer:  bufio.NewWriter(file),
-			db:      nil,
-		}, nil
-	default:
-		db, err := sql.Open("postgres", cfg.Database)
-		if err != nil {
-			return nil, err
-		}
-		defer func(db *sql.DB) {
-			err := db.Close()
-			if err != nil {
-				return
-			}
-		}(db)
-
-		return &Store{
-			Storage: *statsStorage,
-			writer:  nil,
-			db:      db,
-		}, nil
+	file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, err
 	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
+	if cfg.Restore {
+		_, err := os.Stat(cfg.FileStoragePath)
+		if !os.IsNotExist(err) {
+			readFile, err := os.OpenFile(cfg.FileStoragePath, os.O_RDONLY, 0644)
+			if err != nil {
+				return nil, err
+			}
+			_, err = readFile.Stat()
+			if err != nil {
+				return nil, err
+			}
+			scanner := bufio.NewScanner(readFile)
+			if !scanner.Scan() {
+				return nil, scanner.Err()
+			}
+
+			data := scanner.Bytes()
+			err = json.Unmarshal(data, &statsStorage)
+			if err != nil {
+				return nil, err
+			}
+
+			err = readFile.Close()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	db, err := sql.Open("postgres", cfg.Database)
+	if err != nil {
+		return nil, err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			return
+		}
+	}(db)
+
+	return &Store{
+		Storage: *statsStorage,
+		writer:  bufio.NewWriter(file),
+		db:      db,
+	}, nil
 }
 
 // GetGaugeStatsByID return gauge metric from GaugeStorage by ID
