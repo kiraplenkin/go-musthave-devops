@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bufio"
-	"database/sql"
 	"encoding/json"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	_ "github.com/lib/pq"
@@ -13,7 +12,6 @@ import (
 type Store struct {
 	Storage types.Storage
 	writer  *bufio.Writer
-	db      *sql.DB
 }
 
 // NewStorage create new Store with types.Storage and writer
@@ -55,25 +53,10 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 		return nil, err
 	}
 
-	db, err := sql.Open("postgres", cfg.Database)
-	if err != nil {
-		return nil, err
-	}
-
-	if cfg.Database != "" {
-		return &Store{
-			Storage: *statsStorage,
-			writer:  nil,
-			db:      db,
-		}, nil
-	} else {
-		return &Store{
-			Storage: *statsStorage,
-			writer:  bufio.NewWriter(file),
-			db:      nil,
-		}, nil
-	}
-
+	return &Store{
+		Storage: *statsStorage,
+		writer:  bufio.NewWriter(file),
+	}, nil
 
 }
 
@@ -131,13 +114,4 @@ func (s *Store) WriteToFile() error {
 		return err
 	}
 	return s.writer.Flush()
-}
-
-// Ping server
-func (s *Store) Ping() error {
-	err := s.db.Ping()
-	if err != nil {
-		return err
-	}
-	return nil
 }
