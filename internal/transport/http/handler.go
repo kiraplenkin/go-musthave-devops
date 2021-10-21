@@ -3,7 +3,6 @@ package http
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -41,7 +40,7 @@ func (h *Handler) SetupRouters() {
 	h.Router.HandleFunc("/value/", h.GetStatsByTypeJSON).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
-	h.Router.HandleFunc("/ping", h.PingDatabase).Methods(http.MethodGet)
+	//h.Router.HandleFunc("/ping", h.PingDatabase).Methods(http.MethodGet)
 }
 
 //GetAllStats handler that return all values from storage.Store
@@ -304,25 +303,3 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PingDatabase check connection to Database
-func (h Handler) PingDatabase(w http.ResponseWriter, r *http.Request) {
-	db, err := sql.Open("postgres", h.Cfg.Database)
-	if err != nil {
-		http.Error(w, "can't connect to db", http.StatusInternalServerError)
-		return
-	}
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			return
-		}
-	}(db)
-
-	err = db.Ping()
-	if err != nil {
-		http.Error(w, "can't connect to db", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
