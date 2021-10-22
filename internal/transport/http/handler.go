@@ -24,9 +24,9 @@ type Handler struct {
 }
 
 // NewHandler returns a pointer to Handler
-func NewHandler(s storage.Store, cfg types.Config) *Handler {
+func NewHandler(s *storage.Store, cfg types.Config) *Handler {
 	return &Handler{
-		Storage: &s,
+		Storage: s,
 		Cfg:     &cfg,
 		Mu:      &sync.Mutex{},
 	}
@@ -40,6 +40,7 @@ func (h *Handler) SetupRouters() {
 	h.Router.HandleFunc("/value/", h.GetStatsByTypeJSON).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
+	h.Router.HandleFunc("/ping", h.Ping).Methods(http.MethodGet)
 }
 
 //GetAllStats handler that return all values from storage.Store
@@ -299,5 +300,13 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
+	}
+}
+
+// Ping db
+func (h Handler) Ping(w http.ResponseWriter, _ *http.Request)  {
+	err := h.Storage.Ping()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("can't connect to db: %v", err), http.StatusInternalServerError)
 	}
 }
