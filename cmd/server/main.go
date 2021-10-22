@@ -34,10 +34,6 @@ func main() {
 	flag.StringVar(&serverCfg.Database, "d", serverCfg.Database, "database connection string")
 	flag.Parse()
 
-	if serverCfg.ServerAddress != "" {
-		serverCfg.FileStoragePath = ""
-	}
-
 	storeInterval, err := time.ParseDuration(serverCfg.StoreInterval)
 	if err != nil {
 		fmt.Println(err)
