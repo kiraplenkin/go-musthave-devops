@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"database/sql"
 	"encoding/json"
+	_ "github.com/jackc/pgx/v4"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
-	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 	"os"
 )
@@ -15,6 +15,7 @@ type Store struct {
 	Storage types.Storage
 	writer  *bufio.Writer
 	db      *sql.DB
+	cfg     types.Config
 }
 
 // NewStorage create new Store with types.Storage and writer
@@ -69,6 +70,7 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 		Storage: *statsStorage,
 		writer:  bufio.NewWriter(file),
 		db:      db,
+		cfg:     *cfg,
 	}, nil
 
 }
@@ -112,21 +114,37 @@ func (s *Store) GetAllStats() (*types.Storage, error) {
 	return &s.Storage, nil
 }
 
-// WriteToFile save types.Storage to file
-func (s *Store) WriteToFile() error {
-	data, err := json.Marshal(&s.Storage)
-	if err != nil {
-		return err
+// Save types.Storage to file or db
+func (s *Store) Save() error {
+	if s.cfg.Database == "" {
+		data, err := json.Marshal(&s.Storage)
+		if err != nil {
+			return err
+		}
+		_, err = s.writer.Write(data)
+		if err != nil {
+			return err
+		}
+		err = s.writer.WriteByte('\n')
+		if err != nil {
+			return err
+		}
+		return s.writer.Flush()
+	} else {
+		for key, metric := range s.Storage.GaugeStorage {
+			_, err := s.db.Exec("INSERT INTO metrics (id, mtype, value) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET mtype=$2, value=$3;", key, metric.Type, metric.Value)
+			if err != nil {
+				return err
+			}
+		}
+		for key, delta := range s.Storage.CounterStorage {
+			_, err := s.db.Exec("INSERT INTO metrics (id, mtype, delta) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET mtype=$2, delta=$3;", key, "counter", delta)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	_, err = s.writer.Write(data)
-	if err != nil {
-		return err
-	}
-	err = s.writer.WriteByte('\n')
-	if err != nil {
-		return err
-	}
-	return s.writer.Flush()
+	return nil
 }
 
 func (s *Store) Ping() error {

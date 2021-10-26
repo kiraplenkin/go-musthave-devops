@@ -68,7 +68,7 @@ func main() {
 	go func() {
 		for {
 			<-storeIntervalTicker.C
-			err := store.WriteToFile()
+			err := store.Save()
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -76,9 +76,9 @@ func main() {
 	}()
 
 	<-done
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	err = store.WriteToFile()
+	err = store.Save()
 	if err != nil {
 		return
 	}
