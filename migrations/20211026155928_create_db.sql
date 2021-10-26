@@ -1,5 +1,4 @@
 -- +goose Up
--- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS metrics
 (
     ID    TEXT NOT NULL,
@@ -9,7 +8,6 @@ CREATE TABLE IF NOT EXISTS metrics
     Hash  TEXT,
     PRIMARY KEY (ID)
 );
--- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin

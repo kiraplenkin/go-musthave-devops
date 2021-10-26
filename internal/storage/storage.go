@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
 	"os"
 )
 
@@ -60,6 +61,10 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 		return nil, err
 	}
 
+	err = goose.Up(db, "migrations")
+	if err != nil {
+		panic(err)
+	}
 	return &Store{
 		Storage: *statsStorage,
 		writer:  bufio.NewWriter(file),
