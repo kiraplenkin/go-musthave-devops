@@ -7,6 +7,7 @@ import (
 	_ "github.com/jackc/pgx/v4"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
 	"github.com/pressly/goose/v3"
+	"io"
 	"os"
 )
 
@@ -48,16 +49,17 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 			cfg:     *cfg,
 		}, nil
 	} else {
-		file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-		if err != nil {
-			return nil, err
-		}
 		if cfg.Restore {
 			err := Load(*cfg, *statsStorage, nil)
 			if err != nil {
 				return nil, err
 			}
 		}
+		file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			return nil, err
+		}
+
 		return &Store{
 			Storage: *statsStorage,
 			writer:  bufio.NewWriter(file),
@@ -144,29 +146,55 @@ func Load(cfg types.Config, statsStorage types.Storage, db *sql.DB) error {
 	if cfg.Database == "" {
 		_, err := os.Stat(cfg.FileStoragePath)
 		if !os.IsNotExist(err) {
-			readFile, err := os.OpenFile(cfg.FileStoragePath, os.O_RDONLY, 0644)
+			//readFile, err := os.OpenFile(cfg.FileStoragePath, os.O_RDONLY, 0644)
+			//if err != nil {
+			//	return err
+			//}
+			//_, err = readFile.Stat()
+			//if err != nil {
+			//	return err
+			//}
+			//scanner := bufio.NewScanner(readFile)
+			//if !scanner.Scan() {
+			//	return scanner.Err()
+			//}
+			//data := scanner.Bytes()
+			file, err := os.Open(cfg.FileStoragePath)
 			if err != nil {
-				return err
+				panic(err)
 			}
-			_, err = readFile.Stat()
-			if err != nil {
-				return err
-			}
-			scanner := bufio.NewScanner(readFile)
-			if !scanner.Scan() {
-				return scanner.Err()
+			defer func(file *os.File) {
+				err := file.Close()
+				if err != nil {
+					return
+				}
+			}(file)
+
+			reader := bufio.NewReader(file)
+			lastLineSize := 0
+
+			for {
+				line, _, err := reader.ReadLine()
+				if err == io.EOF {
+					break
+				}
+				lastLineSize = len(line)
 			}
 
-			data := scanner.Bytes()
+			fileInfo, err := os.Stat(cfg.FileStoragePath)
+			buffer := make([]byte, lastLineSize)
+			offset := fileInfo.Size() - int64(lastLineSize+1)
+			numRead, err := file.ReadAt(buffer, offset)
+			data := buffer[:numRead]
+
 			err = json.Unmarshal(data, &statsStorage)
 			if err != nil {
 				return err
 			}
-
-			err = readFile.Close()
-			if err != nil {
-				return err
-			}
+			//err = readFile.Close()
+			//if err != nil {
+			//	return err
+			//}
 		}
 	} else {
 		rows, err := db.Query("SELECT id, mtype, delta, value FROM metrics;")
