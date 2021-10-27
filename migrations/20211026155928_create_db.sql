@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS metrics
     MType TEXT NOT NULL,
     Delta INTEGER,
     Value FLOAT,
-    Hash  TEXT,
     PRIMARY KEY (ID)
 );
 

@@ -24,55 +24,47 @@ func NewStorage(cfg *types.Config) (*Store, error) {
 		GaugeStorage:   map[string]types.Stats{},
 		CounterStorage: map[string]int64{},
 	}
-	if cfg.Restore {
-		_, err := os.Stat(cfg.FileStoragePath)
-		if !os.IsNotExist(err) {
-			readFile, err := os.OpenFile(cfg.FileStoragePath, os.O_RDONLY, 0644)
-			if err != nil {
-				return nil, err
-			}
-			_, err = readFile.Stat()
-			if err != nil {
-				return nil, err
-			}
-			scanner := bufio.NewScanner(readFile)
-			if !scanner.Scan() {
-				return nil, scanner.Err()
-			}
 
-			data := scanner.Bytes()
-			err = json.Unmarshal(data, &statsStorage)
-			if err != nil {
-				return nil, err
-			}
+	if cfg.Database != "" {
+		db, err := sql.Open("postgres", cfg.Database)
+		if err != nil {
+			return nil, err
+		}
 
-			err = readFile.Close()
+		err = goose.Up(db, "migrations")
+		if err != nil {
+			panic(err)
+		}
+		if cfg.Restore {
+			err := Load(*cfg, *statsStorage, db)
 			if err != nil {
 				return nil, err
 			}
 		}
+		return &Store{
+			Storage: *statsStorage,
+			writer:  nil,
+			db:      db,
+			cfg:     *cfg,
+		}, nil
+	} else {
+		file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			return nil, err
+		}
+		if cfg.Restore {
+			err := Load(*cfg, *statsStorage, nil)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return &Store{
+			Storage: *statsStorage,
+			writer:  bufio.NewWriter(file),
+			db:      nil,
+			cfg:     *cfg,
+		}, nil
 	}
-	file, err := os.OpenFile(cfg.FileStoragePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := sql.Open("postgres", cfg.Database)
-	if err != nil {
-		return nil, err
-	}
-
-	err = goose.Up(db, "migrations")
-	if err != nil {
-		panic(err)
-	}
-	return &Store{
-		Storage: *statsStorage,
-		writer:  bufio.NewWriter(file),
-		db:      db,
-		cfg:     *cfg,
-	}, nil
-
 }
 
 // GetGaugeStatsByID return gauge metric from GaugeStorage by ID
@@ -147,6 +139,72 @@ func (s *Store) Save() error {
 	return nil
 }
 
+// Load ...
+func Load(cfg types.Config, statsStorage types.Storage, db *sql.DB) error {
+	if cfg.Database == "" {
+		_, err := os.Stat(cfg.FileStoragePath)
+		if !os.IsNotExist(err) {
+			readFile, err := os.OpenFile(cfg.FileStoragePath, os.O_RDONLY, 0644)
+			if err != nil {
+				return err
+			}
+			_, err = readFile.Stat()
+			if err != nil {
+				return err
+			}
+			scanner := bufio.NewScanner(readFile)
+			if !scanner.Scan() {
+				return scanner.Err()
+			}
+
+			data := scanner.Bytes()
+			err = json.Unmarshal(data, &statsStorage)
+			if err != nil {
+				return err
+			}
+
+			err = readFile.Close()
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		rows, err := db.Query("SELECT id, mtype, delta, value FROM metrics;")
+		if err != nil {
+			return err
+		}
+		defer func(rows *sql.Rows) {
+			err := rows.Close()
+			if err != nil {
+				return
+			}
+		}(rows)
+
+		for rows.Next() {
+			var metric types.Metrics
+			err := rows.Scan(&metric.ID, &metric.MType, &metric.Delta, &metric.Value)
+			if err != nil {
+				return err
+			}
+			switch metric.MType {
+			case "gauge":
+				statsStorage.GaugeStorage[metric.ID] = types.Stats{
+					Type:  metric.MType,
+					Value: *metric.Value,
+				}
+			case "counter":
+				statsStorage.CounterStorage[metric.ID] = *metric.Delta
+			}
+		}
+		err = rows.Err()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Ping ...
 func (s *Store) Ping() error {
 	err := s.db.Ping()
 	if err != nil {
