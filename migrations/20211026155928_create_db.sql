@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS metrics
 (
     ID    TEXT NOT NULL,
     MType TEXT NOT NULL,
-    Delta INTEGER,
+    Delta bigint,
     Value FLOAT,
     PRIMARY KEY (ID)
 );

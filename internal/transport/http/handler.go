@@ -37,6 +37,7 @@ func (h *Handler) SetupRouters() {
 	h.Router = mux.NewRouter()
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/update/", h.PostJSONStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/updates/", h.PostJSONStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/", h.GetStatsByTypeJSON).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
@@ -304,7 +305,7 @@ func (h Handler) PostURLStat(w http.ResponseWriter, r *http.Request) {
 }
 
 // Ping db
-func (h Handler) Ping(w http.ResponseWriter, _ *http.Request)  {
+func (h Handler) Ping(w http.ResponseWriter, _ *http.Request) {
 	err := h.Storage.Ping()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("can't connect to db: %v", err), http.StatusInternalServerError)
