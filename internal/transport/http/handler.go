@@ -37,7 +37,7 @@ func (h *Handler) SetupRouters() {
 	h.Router = mux.NewRouter()
 	h.Router.HandleFunc("/", h.GetAllStats).Methods(http.MethodGet)
 	h.Router.HandleFunc("/update/", h.PostJSONStat).Methods(http.MethodPost)
-	h.Router.HandleFunc("/updates/", h.PostJSONStat).Methods(http.MethodPost)
+	h.Router.HandleFunc("/updates/", h.PostJSONStats).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/", h.GetStatsByTypeJSON).Methods(http.MethodPost)
 	h.Router.HandleFunc("/update/{type}/{id}/{value}", h.PostURLStat).Methods(http.MethodPost)
 	h.Router.HandleFunc("/value/{type}/{id}", h.GetStatsByType).Methods(http.MethodGet)
@@ -254,6 +254,99 @@ func (h Handler) PostJSONStat(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "unknown type", http.StatusNotImplemented)
 		return
+	}
+}
+
+// PostJSONStats ...
+func (h Handler) PostJSONStats(w http.ResponseWriter, r *http.Request) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "can't read body", http.StatusBadRequest)
+		return
+	}
+
+	var requestStats []types.Metrics
+	err = json.Unmarshal(body, &requestStats)
+	if err != nil {
+		http.Error(w, "can't decode input json", http.StatusBadRequest)
+		return
+	}
+
+	for _, requestStat := range requestStats {
+		id := requestStat.ID
+		statsType := requestStat.MType
+
+		switch statsType {
+		case "gauge":
+			statsValue := requestStat.Value
+			// todo create func
+			if h.Cfg.Key != "" {
+				hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
+				hash.Write([]byte(fmt.Sprintf("%s:gauge:%f", id, *statsValue)))
+				if hmac.Equal([]byte(requestStat.Hash), []byte(fmt.Sprintf("%x", hash.Sum(nil)))) {
+					newStat := types.Stats{
+						Type:  statsType,
+						Value: *statsValue,
+					}
+					err = h.Storage.UpdateGaugeStats(id, newStat)
+					if err != nil {
+						http.Error(w, "can't save stat", http.StatusInternalServerError)
+						return
+					}
+					w.WriteHeader(http.StatusOK)
+				} else {
+					http.Error(w, "hash doesn't equal", http.StatusBadRequest)
+				}
+			}
+			newStat := types.Stats{
+				Type:  statsType,
+				Value: *statsValue,
+			}
+			err = h.Storage.UpdateGaugeStats(id, newStat)
+			if err != nil {
+				http.Error(w, "can't save stat", http.StatusInternalServerError)
+				return
+			}
+			//w.WriteHeader(http.StatusOK)
+		case "counter":
+			statsValue := requestStat.Delta
+			// todo create func
+			if h.Cfg.Key != "" {
+				hash := hmac.New(sha256.New, []byte(h.Cfg.Key))
+				hash.Write([]byte(fmt.Sprintf("%s:counter:%d", id, *statsValue)))
+				if hmac.Equal([]byte(requestStat.Hash), []byte(fmt.Sprintf("%x", hash.Sum(nil)))) {
+					newStat := types.Stats{
+						Type:  statsType,
+						Value: float64(*statsValue),
+					}
+					err = h.Storage.UpdateGaugeStats(id, newStat)
+					if err != nil {
+						http.Error(w, "can't save stat", http.StatusInternalServerError)
+						return
+					}
+					w.WriteHeader(http.StatusOK)
+				} else {
+					http.Error(w, "hash doesn't equal", http.StatusBadRequest)
+					return
+				}
+			}
+			newStat := types.Stats{
+				Type:  statsType,
+				Value: float64(*statsValue),
+			}
+			err = h.Storage.UpdateCounterStats(id, newStat)
+			if err != nil {
+				http.Error(w, "can't save stat", http.StatusInternalServerError)
+				return
+			}
+			//w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "unknown type", http.StatusNotImplemented)
+			return
+		}
 	}
 }
 

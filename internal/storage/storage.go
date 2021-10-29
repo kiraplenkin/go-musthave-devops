@@ -146,19 +146,6 @@ func Load(cfg types.Config, statsStorage types.Storage, db *sql.DB) error {
 	if cfg.Database == "" {
 		_, err := os.Stat(cfg.FileStoragePath)
 		if !os.IsNotExist(err) {
-			//readFile, err := os.OpenFile(cfg.FileStoragePath, os.O_RDONLY, 0644)
-			//if err != nil {
-			//	return err
-			//}
-			//_, err = readFile.Stat()
-			//if err != nil {
-			//	return err
-			//}
-			//scanner := bufio.NewScanner(readFile)
-			//if !scanner.Scan() {
-			//	return scanner.Err()
-			//}
-			//data := scanner.Bytes()
 			file, err := os.Open(cfg.FileStoragePath)
 			if err != nil {
 				panic(err)
@@ -182,19 +169,21 @@ func Load(cfg types.Config, statsStorage types.Storage, db *sql.DB) error {
 			}
 
 			fileInfo, err := os.Stat(cfg.FileStoragePath)
+			if err != nil {
+				return err
+			}
 			buffer := make([]byte, lastLineSize)
 			offset := fileInfo.Size() - int64(lastLineSize+1)
 			numRead, err := file.ReadAt(buffer, offset)
+			if err != nil {
+				return err
+			}
 			data := buffer[:numRead]
 
 			err = json.Unmarshal(data, &statsStorage)
 			if err != nil {
 				return err
 			}
-			//err = readFile.Close()
-			//if err != nil {
-			//	return err
-			//}
 		}
 	} else {
 		rows, err := db.Query("SELECT id, mtype, delta, value FROM metrics;")
