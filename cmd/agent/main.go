@@ -2,32 +2,41 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
 	monitorService "github.com/kiraplenkin/go-musthave-devops/internal/monitor"
 	sendingService "github.com/kiraplenkin/go-musthave-devops/internal/sender"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
-var (
-	updateFrequency           int
-	serverAddress, serverPort string
-)
-
 func main() {
-	flag.StringVar(&serverAddress, "s", "", "server address")
-	flag.StringVar(&serverPort, "p", "", "server port")
-	flag.IntVar(&updateFrequency, "f", 0, "update frequency")
+	agentCfg := types.Config{}
+	err := env.Parse(&agentCfg)
+	if err != nil {
+		log.Printf("can't parse env: %+v", err)
+		return
+	}
+
+	flag.StringVar(&agentCfg.ServerAddress, "a", agentCfg.ServerAddress, "server address")
+	flag.StringVar(&agentCfg.UpdateFrequency, "p", agentCfg.UpdateFrequency, "poll interval")
+	flag.StringVar(&agentCfg.ReportFrequency, "r", agentCfg.ReportFrequency, "report interval")
+	flag.StringVar(&agentCfg.Key, "k", "", "key for hash")
 	flag.Parse()
-	if updateFrequency != 0 {
-		types.SenderConfig.UpdateFrequency = time.Duration(updateFrequency)
+
+	updateFrequency, err := time.ParseDuration(agentCfg.UpdateFrequency)
+	if err != nil {
+		log.Printf("can't parse updateFrequency: %+v", err)
+		return
 	}
-	if serverAddress != "" {
-		types.SenderConfig.ServerAddress = serverAddress
-	}
-	if serverPort != "" {
-		types.SenderConfig.ServerPort = serverPort
+	reportFrequency, err := time.ParseDuration(agentCfg.ReportFrequency)
+	if err != nil {
+		log.Printf("can't parse reportFrequency: %+v", err)
+		return
 	}
 
 	restyClient := resty.New().
@@ -35,21 +44,34 @@ func main() {
 		SetRetryWaitTime(types.SenderConfig.RetryWaitTime).
 		SetRetryMaxWaitTime(types.SenderConfig.RetryMaxWaitTime)
 
-	sender := sendingService.NewSender()
 	monitor := monitorService.NewMonitor()
+	sender := sendingService.NewSender(restyClient, monitor)
 
-	for {
-		ticker := time.NewTicker(types.SenderConfig.UpdateFrequency * time.Second)
-		<-ticker.C
-		stats, err := monitor.Get()
-		if err != nil {
-			fmt.Println(err)
-			return
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	pollIntervalTicker := time.NewTicker(updateFrequency)
+	reportIntervalTicker := time.NewTicker(reportFrequency)
+
+	// update metrics
+	go func() {
+		for {
+			<-pollIntervalTicker.C
+			monitor.Update()
 		}
-		err = sender.Send(*restyClient, stats, types.SenderConfig.ServerAddress, types.SenderConfig.ServerPort)
-		if err != nil {
-			fmt.Println(err)
-			return
+	}()
+
+	// report metrics
+	go func() {
+		for {
+			<-reportIntervalTicker.C
+			err := sender.Send(agentCfg)
+			if err != nil {
+				log.Printf("can't send metrics: %+v", err)
+				return
+			}
 		}
-	}
+	}()
+
+	<-done
 }

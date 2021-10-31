@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/caarlos0/env/v6"
+	"github.com/kiraplenkin/go-musthave-devops/internal/compress"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
 	transportHTTP "github.com/kiraplenkin/go-musthave-devops/internal/transport/http"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
@@ -14,59 +13,76 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
-var serverPort string
-
 func main() {
-	serverCfg := types.ServerConfig{}
+	serverCfg := types.Config{}
+
 	err := env.Parse(&serverCfg)
 	if err != nil {
+		log.Printf("can't parse env: %+v", err)
 		return
 	}
 
-	flag.StringVar(&serverPort, "p", "8080", "port to run server")
+	flag.StringVar(&serverCfg.ServerAddress, "a", serverCfg.ServerAddress, "server address")
+	flag.BoolVar(&serverCfg.Restore, "r", serverCfg.Restore, "restore storage")
+	flag.StringVar(&serverCfg.StoreInterval, "i", serverCfg.StoreInterval, "store interval")
+	flag.StringVar(&serverCfg.FileStoragePath, "f", serverCfg.FileStoragePath, "file storage")
+	flag.StringVar(&serverCfg.Key, "k", "", "key for hash")
+	flag.StringVar(&serverCfg.Database, "d", serverCfg.Database, "database connection string")
 	flag.Parse()
+
+	storeInterval, err := time.ParseDuration(serverCfg.StoreInterval)
+	if err != nil {
+		log.Printf("can't parse storeInterval: %+v", err)
+		return
+	}
+
+	storeIntervalTicker := time.NewTicker(storeInterval)
 
 	store, err := storage.NewStorage(&serverCfg)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("can't create new storage: %+v", err)
 		return
 	}
-	handler := transportHTTP.NewHandler(*store)
+	handler := transportHTTP.NewHandler(store, serverCfg)
 	handler.SetupRouters()
 
 	srv := &http.Server{
-		Addr:    serverCfg.ServerAddress + ":" + serverPort,
-		Handler: handler.Router,
+		Addr:    serverCfg.ServerAddress,
+		Handler: compress.GzipHandle(handler.Router),
 	}
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
+	// http server
 	go func() {
+		log.Println("Server started")
 		log.Fatal(srv.ListenAndServe())
 	}()
 
-	log.Println("Server Started")
-
-	<-done
-	log.Println("Server Stopped")
-	ctx, cancel := context.WithCancel(context.Background())
-	// TODO try defer
-	func() {
-		data, err := json.Marshal(&store.Storage)
-		if err != nil {
-			log.Fatalf("can't marshal json: %+v", err)
+	// save to file
+	go func() {
+		for {
+			<-storeIntervalTicker.C
+			err := store.Save()
+			if err != nil {
+				log.Printf("can't save: %+v", err)
+			}
 		}
-		err = storage.SaveToFile(data, serverCfg.FileStoragePath)
-		if err != nil {
-			log.Fatalf("can't save stats to file: %+v", err)
-		}
-		cancel()
 	}()
 
+	<-done
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	err = store.Save()
+	if err != nil {
+		log.Printf("can't save: %+v", err)
+		return
+	}
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed: %+v", err)
+		log.Fatalf("server shutdown failed: %+v", err)
 	}
 }

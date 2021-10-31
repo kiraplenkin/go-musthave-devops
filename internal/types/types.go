@@ -6,64 +6,58 @@ import (
 )
 
 type (
-	// Config configs of app
-	Config struct {
+	// AgentConfig configs of app
+	AgentConfig struct {
 		Endpoint         string
-		UpdateFrequency  time.Duration
-		ServerAddress    string
-		ServerPort       string
 		RetryCount       int
 		RetryWaitTime    time.Duration
 		RetryMaxWaitTime time.Duration
 	}
 
-	// ServerConfig config for server app
-	ServerConfig struct {
-		ServerAddress   string `env:"SERVER_ADDRESS" envDefault:"localhost"`
-		FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"test.json"`
+	// Config for server and agent apps
+	Config struct {
+		ServerAddress   string `env:"ADDRESS" envDefault:"localhost:8080"`
+		FileStoragePath string `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
+		StoreInterval   string `env:"STORE_INTERVAL" envDefault:"5m"`
+		Restore         bool   `env:"RESTORE" envDefault:"true"`
+		UpdateFrequency string `env:"POLL_INTERVAL" envDefault:"2s"`
+		ReportFrequency string `env:"REPORT_INTERVAL" envDefault:"10s"`
+		Key             string `env:"KEY"`
+		Database        string `env:"DATABASE_DSN"`
 	}
 
-	// Stats struct to save stats
+	// Stats ...
 	Stats struct {
-		TotalAlloc   int
-		Sys          int
-		Mallocs      int
-		Frees        int
-		LiveObjects  int
-		PauseTotalNs int
-		NumGC        int
-		NumGoroutine int
+		Type  string
+		Value float64
+	}
+
+	// Metrics ...
+	Metrics struct {
+		ID    string   `json:"id"`              // Имя метрики
+		MType string   `json:"type"`            // Параметр принимающий значение gauge или counter
+		Delta *int64   `json:"delta,omitempty"` // Значение метрики в случае передачи counter
+		Value *float64 `json:"value,omitempty"` // Значение метрики в случае передачи gauge
+		Hash  string   `json:"hash,omitempty"`  // Значение hash-функции
 	}
 
 	// Storage struct of storage
-	Storage map[uint]Stats
-
-	// RequestStats struct to transport by JSON
-	RequestStats struct {
-		ID           uint `json:"id,omitempty"`
-		TotalAlloc   uint `json:"totalAlloc,omitempty"`
-		Sys          uint `json:"sys,omitempty"`
-		Mallocs      uint `json:"mallocs,omitempty"`
-		Frees        uint `json:"frees,omitempty"`
-		LiveObjects  uint `json:"liveObjects,omitempty"`
-		PauseTotalNs uint `json:"pauseTotalNs,omitempty"`
-		NumGC        uint `json:"numGC,omitempty"`
-		NumGoroutine uint `json:"numGoroutine,omitempty"`
+	Storage struct {
+		GaugeStorage   map[string]Stats
+		CounterStorage map[string]int64
 	}
 )
 
 var (
 	// SenderConfig config for sender service
-	SenderConfig = Config{
+	SenderConfig = AgentConfig{
 		Endpoint:         "/update/",
-		UpdateFrequency:  5,
-		ServerAddress:    "localhost",
-		ServerPort:       "8080",
-		RetryCount:       5,
-		RetryWaitTime:    10,
+		RetryCount:       10,
+		RetryWaitTime:    5,
 		RetryMaxWaitTime: 30,
 	}
 
 	ErrCantGetStats = errors.New("can't get stats by ID")
 	ErrCantSaveData = errors.New("sent data not saved")
+	ErrUnknownStat  = errors.New("unknown stat")
 )
