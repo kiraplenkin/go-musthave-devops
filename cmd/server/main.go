@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/kiraplenkin/go-musthave-devops/internal/compress"
 	"github.com/kiraplenkin/go-musthave-devops/internal/storage"
@@ -22,7 +21,7 @@ func main() {
 
 	err := env.Parse(&serverCfg)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("can't parse env: %+v", err)
 		return
 	}
 
@@ -36,7 +35,7 @@ func main() {
 
 	storeInterval, err := time.ParseDuration(serverCfg.StoreInterval)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("can't parse storeInterval: %+v", err)
 		return
 	}
 
@@ -44,7 +43,7 @@ func main() {
 
 	store, err := storage.NewStorage(&serverCfg)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("can't create new storage: %+v", err)
 		return
 	}
 	handler := transportHTTP.NewHandler(store, serverCfg)
@@ -70,7 +69,7 @@ func main() {
 			<-storeIntervalTicker.C
 			err := store.Save()
 			if err != nil {
-				fmt.Println(err)
+				log.Printf("can't save: %+v", err)
 			}
 		}
 	}()
@@ -80,9 +79,10 @@ func main() {
 	defer cancel()
 	err = store.Save()
 	if err != nil {
+		log.Printf("can't save: %+v", err)
 		return
 	}
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed: %+v", err)
+		log.Fatalf("server shutdown failed: %+v", err)
 	}
 }

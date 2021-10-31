@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
 	monitorService "github.com/kiraplenkin/go-musthave-devops/internal/monitor"
 	sendingService "github.com/kiraplenkin/go-musthave-devops/internal/sender"
 	"github.com/kiraplenkin/go-musthave-devops/internal/types"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,6 +18,7 @@ func main() {
 	agentCfg := types.Config{}
 	err := env.Parse(&agentCfg)
 	if err != nil {
+		log.Printf("can't parse env: %+v", err)
 		return
 	}
 
@@ -29,11 +30,12 @@ func main() {
 
 	updateFrequency, err := time.ParseDuration(agentCfg.UpdateFrequency)
 	if err != nil {
+		log.Printf("can't parse updateFrequency: %+v", err)
 		return
 	}
 	reportFrequency, err := time.ParseDuration(agentCfg.ReportFrequency)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("can't parse reportFrequency: %+v", err)
 		return
 	}
 
@@ -65,7 +67,7 @@ func main() {
 			<-reportIntervalTicker.C
 			err := sender.Send(agentCfg)
 			if err != nil {
-				fmt.Println(err)
+				log.Printf("can't send metrics: %+v", err)
 				return
 			}
 		}

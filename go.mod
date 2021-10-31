@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/lib/pq v1.10.3
-	github.com/pressly/goose/v3 v3.3.0
+	github.com/pressly/goose/v3 v3.3.1
 	github.com/stretchr/testify v1.7.0
 )
 
